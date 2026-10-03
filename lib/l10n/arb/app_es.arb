@@ -1,7 +1,11 @@
 {
     "@@locale": "es",
-    "counterAppBarTitle": "Contador",
-    "@counterAppBarTitle": {
-        "description": "Texto mostrado en la AppBar de la página del contador"
+    "appTitle": "dart_code_3D",
+    "@appTitle": {
+        "description": "Nombre de la aplicación, mostrado en la AppBar"
+    },
+    "viewerPreparingScene": "Preparando la escena 3D…",
+    "@viewerPreparingScene": {
+        "description": "Se muestra mientras el renderizador 3D carga sus shaders y recursos"
     }
 }
