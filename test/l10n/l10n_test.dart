@@ -1,7 +1,6 @@
-import 'dart:async';
-
+import 'package:dart_code_3d/analysis/analysis.dart';
+import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/l10n/l10n.dart';
-import 'package:dart_code_3d/viewer/viewer.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -15,17 +14,17 @@ void main() {
     });
 
     testWidgets('shows French strings for the fr locale', (tester) async {
-      final initialization = Completer<void>();
       await tester.pumpWidget(
         MaterialApp(
           locale: const Locale('fr'),
           localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: SphereSceneView(initialize: () => initialization.future),
+          theme: AppTheme.light,
+          home: const NewAnalysisPage(),
         ),
       );
 
-      expect(find.text('Préparation de la scène 3D…'), findsOneWidget);
+      expect(find.text('Nouvelle analyse'), findsOneWidget);
     });
   });
 }

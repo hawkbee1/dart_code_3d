@@ -8,7 +8,7 @@ import 'package:material_ui/material_ui.dart';
 
 extension PumpApp on WidgetTester {
   /// Pumps [widget] inside the app's real themes and localizations, with an
-  /// optional [settingsBloc], mock [router] and [textScale].
+  /// optional [settingsBloc], mock [router], [textScale] and [flavor].
   Future<void> pumpApp(
     Widget widget, {
     ThemeMode themeMode = ThemeMode.light,
@@ -16,8 +16,9 @@ extension PumpApp on WidgetTester {
     SettingsBloc? settingsBloc,
     GoRouter? router,
     double textScale = 1,
+    AppFlavor flavor = AppFlavor.production,
   }) {
-    var child = widget;
+    Widget child = RepositoryProvider.value(value: flavor, child: widget);
     if (router != null) {
       child = InheritedGoRouter(goRouter: router, child: child);
     }
