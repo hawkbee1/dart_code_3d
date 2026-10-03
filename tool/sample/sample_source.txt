@@ -1,0 +1,767 @@
+=== pubspec.yaml
+name: weather_sample
+environment:
+  sdk: ^3.9.0
+dependencies:
+  equatable: ^2.0.0
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.0.0
+  http: ^1.0.0
+=== lib/main.dart
+import 'package:flutter/widgets.dart';
+import 'package:weather_sample/app/app.dart';
+import 'package:weather_sample/weather/data/weather_api_client.dart';
+import 'package:weather_sample/weather/data/weather_repository.dart';
+
+void main() {
+  final repository = WeatherRepository(apiClient: WeatherApiClient());
+  runApp(App(weatherRepository: repository));
+}
+=== lib/app/app.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:weather_sample/settings/settings_cubit.dart';
+import 'package:weather_sample/theme/theme_cubit.dart';
+import 'package:weather_sample/theme/app_theme.dart';
+import 'package:weather_sample/weather/data/weather_repository.dart';
+import 'package:weather_sample/weather/view/weather_page.dart';
+
+class App extends StatelessWidget {
+  const App({required this.weatherRepository, super.key});
+
+  final WeatherRepository weatherRepository;
+
+  @override
+  Widget build(BuildContext context) {
+    return RepositoryProvider.value(
+      value: weatherRepository,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => ThemeCubit()),
+          BlocProvider(create: (_) => SettingsCubit()),
+        ],
+        child: const AppView(),
+      ),
+    );
+  }
+}
+
+class AppView extends StatelessWidget {
+  const AppView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final seed = context.watch<ThemeCubit>().state;
+    return MaterialApp(
+      theme: AppTheme.light(seed),
+      darkTheme: AppTheme.dark(seed),
+      home: const WeatherPage(),
+    );
+  }
+}
+=== lib/theme/app_theme.dart
+import 'package:flutter/material.dart';
+
+abstract final class AppTheme {
+  static ThemeData light(Color seed) => _build(seed, Brightness.light);
+
+  static ThemeData dark(Color seed) => _build(seed, Brightness.dark);
+
+  static ThemeData _build(Color seed, Brightness brightness) => ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: brightness),
+      );
+}
+=== lib/theme/theme_cubit.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:weather_sample/weather/models/weather.dart';
+import 'package:weather_sample/weather/models/weather_condition.dart';
+
+class ThemeCubit extends Cubit<Color> {
+  ThemeCubit() : super(defaultColor);
+
+  static const defaultColor = Color(0xFF2196F3);
+
+  void updateTheme(Weather? weather) {
+    if (weather != null) emit(weather.condition.toColor);
+  }
+}
+
+extension WeatherConditionColor on WeatherCondition {
+  Color get toColor => switch (this) {
+        WeatherCondition.clear => Colors.orangeAccent,
+        WeatherCondition.snowy => Colors.lightBlueAccent,
+        WeatherCondition.cloudy => Colors.blueGrey,
+        WeatherCondition.rainy => Colors.indigoAccent,
+        WeatherCondition.unknown => ThemeCubit.defaultColor,
+      };
+}
+=== lib/settings/settings_cubit.dart
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:weather_sample/settings/temperature_units.dart';
+
+class SettingsCubit extends Cubit<TemperatureUnits> {
+  SettingsCubit() : super(TemperatureUnits.celsius);
+
+  void toggleUnits() => emit(state.toggled);
+}
+=== lib/settings/temperature_units.dart
+enum TemperatureUnits {
+  fahrenheit,
+  celsius;
+
+  bool get isCelsius => this == TemperatureUnits.celsius;
+
+  TemperatureUnits get toggled =>
+      isCelsius ? TemperatureUnits.fahrenheit : TemperatureUnits.celsius;
+}
+=== lib/settings/settings_page.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:weather_sample/settings/settings_cubit.dart';
+import 'package:weather_sample/settings/temperature_units.dart';
+
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key});
+
+  static Route<void> route() =>
+      MaterialPageRoute(builder: (_) => const SettingsPage());
+
+  @override
+  Widget build(BuildContext context) {
+    final units = context.watch<SettingsCubit>().state;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: UnitsSwitch(
+        units: units,
+        onToggle: () => context.read<SettingsCubit>().toggleUnits(),
+      ),
+    );
+  }
+}
+
+class UnitsSwitch extends StatelessWidget {
+  const UnitsSwitch({required this.units, required this.onToggle, super.key});
+
+  final TemperatureUnits units;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) => SwitchListTile(
+        title: const Text('Celsius'),
+        value: units.isCelsius,
+        onChanged: (_) => onToggle(),
+      );
+}
+=== lib/weather/models/weather_condition.dart
+enum WeatherCondition { clear, rainy, cloudy, snowy, unknown }
+=== lib/weather/models/temperature.dart
+import 'package:equatable/equatable.dart';
+import 'package:weather_sample/settings/temperature_units.dart';
+
+class Temperature extends Equatable {
+  const Temperature({required this.celsius});
+
+  final double celsius;
+
+  double get fahrenheit => celsius * 9 / 5 + 32;
+
+  double valueIn(TemperatureUnits units) =>
+      units.isCelsius ? celsius : fahrenheit;
+
+  String format(TemperatureUnits units) =>
+      '${valueIn(units).toStringAsFixed(1)}°${units.isCelsius ? 'C' : 'F'}';
+
+  @override
+  List<Object> get props => [celsius];
+}
+=== lib/weather/models/location.dart
+import 'package:equatable/equatable.dart';
+
+class Location extends Equatable {
+  const Location({
+    required this.id,
+    required this.name,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  factory Location.fromJson(Map<String, dynamic> json) => Location(
+        id: json['id'] as int,
+        name: json['name'] as String,
+        latitude: (json['latitude'] as num).toDouble(),
+        longitude: (json['longitude'] as num).toDouble(),
+      );
+
+  final int id;
+  final String name;
+  final double latitude;
+  final double longitude;
+
+  @override
+  List<Object> get props => [id, name, latitude, longitude];
+}
+=== lib/weather/models/weather.dart
+import 'package:equatable/equatable.dart';
+import 'package:weather_sample/weather/models/temperature.dart';
+import 'package:weather_sample/weather/models/weather_condition.dart';
+
+class Weather extends Equatable {
+  const Weather({
+    required this.condition,
+    required this.lastUpdated,
+    required this.location,
+    required this.temperature,
+  });
+
+  static final empty = Weather(
+    condition: WeatherCondition.unknown,
+    lastUpdated: DateTime(0),
+    temperature: const Temperature(celsius: 0),
+    location: '--',
+  );
+
+  final WeatherCondition condition;
+  final DateTime lastUpdated;
+  final String location;
+  final Temperature temperature;
+
+  Weather copyWith({Temperature? temperature, DateTime? lastUpdated}) =>
+      Weather(
+        condition: condition,
+        lastUpdated: lastUpdated ?? this.lastUpdated,
+        location: location,
+        temperature: temperature ?? this.temperature,
+      );
+
+  @override
+  List<Object> get props => [condition, lastUpdated, location, temperature];
+}
+=== lib/weather/models/forecast.dart
+import 'package:weather_sample/weather/models/temperature.dart';
+import 'package:weather_sample/weather/models/weather_condition.dart';
+
+class DailyForecast {
+  const DailyForecast({
+    required this.day,
+    required this.low,
+    required this.high,
+    required this.condition,
+  });
+
+  final DateTime day;
+  final Temperature low;
+  final Temperature high;
+  final WeatherCondition condition;
+
+  double get spread => high.celsius - low.celsius;
+}
+
+class Forecast {
+  const Forecast(this.days);
+
+  final List<DailyForecast> days;
+
+  DailyForecast? get warmest => days.isEmpty
+      ? null
+      : days.reduce((a, b) => a.high.celsius >= b.high.celsius ? a : b);
+
+  double get averageSpread => days.isEmpty
+      ? 0
+      : days.map((d) => d.spread).reduce((a, b) => a + b) / days.length;
+}
+=== lib/weather/data/weather_api_client.dart
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+import 'package:weather_sample/weather/data/api_exceptions.dart';
+import 'package:weather_sample/weather/data/weather_response.dart';
+import 'package:weather_sample/weather/models/location.dart';
+
+class WeatherApiClient {
+  WeatherApiClient({http.Client? httpClient})
+      : _httpClient = httpClient ?? http.Client();
+
+  static const _geocodingHost = 'geocoding-api.open-meteo.com';
+  static const _weatherHost = 'api.open-meteo.com';
+
+  final http.Client _httpClient;
+
+  Future<Location> locationSearch(String query) async {
+    final json = await _get(_geocodingHost, '/v1/search', {'name': query});
+    final results = json['results'] as List?;
+    if (results == null || results.isEmpty) throw LocationNotFoundFailure();
+    return Location.fromJson(results.first as Map<String, dynamic>);
+  }
+
+  Future<WeatherResponse> getWeather(Location location) async {
+    final json = await _get(_weatherHost, '/v1/forecast', {
+      'latitude': '${location.latitude}',
+      'longitude': '${location.longitude}',
+      'current_weather': 'true',
+    });
+    final current = json['current_weather'] as Map<String, dynamic>?;
+    if (current == null) throw WeatherNotFoundFailure();
+    return WeatherResponse.fromJson(current);
+  }
+
+  Future<Map<String, dynamic>> _get(
+    String host,
+    String path,
+    Map<String, String> query,
+  ) async {
+    final response = await _httpClient.get(Uri.https(host, path, query));
+    if (response.statusCode != 200) throw RequestFailure(response.statusCode);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  void close() => _httpClient.close();
+}
+=== lib/weather/data/api_exceptions.dart
+sealed class WeatherApiFailure implements Exception {}
+
+class RequestFailure extends WeatherApiFailure {
+  RequestFailure(this.statusCode);
+
+  final int statusCode;
+}
+
+class LocationNotFoundFailure extends WeatherApiFailure {}
+
+class WeatherNotFoundFailure extends WeatherApiFailure {}
+=== lib/weather/data/weather_response.dart
+import 'package:weather_sample/weather/models/weather_condition.dart';
+
+class WeatherResponse {
+  const WeatherResponse({required this.temperature, required this.weatherCode});
+
+  factory WeatherResponse.fromJson(Map<String, dynamic> json) =>
+      WeatherResponse(
+        temperature: (json['temperature'] as num).toDouble(),
+        weatherCode: (json['weathercode'] as num).toInt(),
+      );
+
+  final double temperature;
+  final int weatherCode;
+
+  WeatherCondition get condition => WeatherCodes.toCondition(weatherCode);
+}
+
+abstract final class WeatherCodes {
+  static WeatherCondition toCondition(int code) => switch (code) {
+        0 => WeatherCondition.clear,
+        1 || 2 || 3 || 45 || 48 => WeatherCondition.cloudy,
+        >= 51 && <= 67 || >= 80 && <= 82 => WeatherCondition.rainy,
+        >= 71 && <= 77 || 85 || 86 => WeatherCondition.snowy,
+        _ => WeatherCondition.unknown,
+      };
+}
+=== lib/weather/data/weather_cache.dart
+import 'package:weather_sample/weather/models/weather.dart';
+
+mixin Expiring {
+  Duration get maxAge => const Duration(minutes: 10);
+
+  bool isFresh(DateTime time, DateTime now) => now.difference(time) < maxAge;
+}
+
+class WeatherCache with Expiring {
+  final _entries = <String, Weather>{};
+
+  Weather? read(String city, DateTime now) {
+    final weather = _entries[city.toLowerCase()];
+    if (weather == null || !isFresh(weather.lastUpdated, now)) return null;
+    return weather;
+  }
+
+  void write(String city, Weather weather) =>
+      _entries[city.toLowerCase()] = weather;
+
+  void clear() => _entries.clear();
+}
+=== lib/weather/data/weather_repository.dart
+import 'package:weather_sample/weather/data/weather_api_client.dart';
+import 'package:weather_sample/weather/data/weather_cache.dart';
+import 'package:weather_sample/weather/models/temperature.dart';
+import 'package:weather_sample/weather/models/weather.dart';
+
+class WeatherRepository {
+  WeatherRepository({required WeatherApiClient apiClient, WeatherCache? cache})
+      : _apiClient = apiClient,
+        _cache = cache ?? WeatherCache();
+
+  final WeatherApiClient _apiClient;
+  final WeatherCache _cache;
+
+  Future<Weather> getWeather(String city) async {
+    final now = DateTime.now();
+    final cached = _cache.read(city, now);
+    if (cached != null) return cached;
+    final location = await _apiClient.locationSearch(city);
+    final response = await _apiClient.getWeather(location);
+    final weather = Weather(
+      condition: response.condition,
+      lastUpdated: now,
+      location: location.name,
+      temperature: Temperature(celsius: response.temperature),
+    );
+    _cache.write(city, weather);
+    return weather;
+  }
+
+  void dispose() {
+    _cache.clear();
+    _apiClient.close();
+  }
+}
+=== lib/weather/cubit/weather_state.dart
+import 'package:equatable/equatable.dart';
+import 'package:weather_sample/settings/temperature_units.dart';
+import 'package:weather_sample/weather/models/weather.dart';
+
+enum WeatherStatus {
+  initial,
+  loading,
+  success,
+  failure;
+
+  bool get isLoading => this == WeatherStatus.loading;
+}
+
+class WeatherState extends Equatable {
+  WeatherState({
+    this.status = WeatherStatus.initial,
+    this.units = TemperatureUnits.celsius,
+    Weather? weather,
+  }) : weather = weather ?? Weather.empty;
+
+  final WeatherStatus status;
+  final TemperatureUnits units;
+  final Weather weather;
+
+  WeatherState copyWith({
+    WeatherStatus? status,
+    TemperatureUnits? units,
+    Weather? weather,
+  }) =>
+      WeatherState(
+        status: status ?? this.status,
+        units: units ?? this.units,
+        weather: weather ?? this.weather,
+      );
+
+  @override
+  List<Object> get props => [status, units, weather];
+}
+=== lib/weather/cubit/weather_cubit.dart
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:weather_sample/settings/temperature_units.dart';
+import 'package:weather_sample/weather/cubit/weather_state.dart';
+import 'package:weather_sample/weather/data/weather_repository.dart';
+
+class WeatherCubit extends Cubit<WeatherState> {
+  WeatherCubit(this._repository) : super(WeatherState());
+
+  final WeatherRepository _repository;
+
+  Future<void> fetchWeather(String? city) async {
+    if (city == null || city.isEmpty) return;
+    emit(state.copyWith(status: WeatherStatus.loading));
+    try {
+      final weather = await _repository.getWeather(city);
+      emit(state.copyWith(status: WeatherStatus.success, weather: weather));
+    } on Exception {
+      emit(state.copyWith(status: WeatherStatus.failure));
+    }
+  }
+
+  Future<void> refreshWeather() async {
+    if (state.status != WeatherStatus.success) return;
+    await fetchWeather(state.weather.location);
+  }
+
+  void changeUnits(TemperatureUnits units) => emit(state.copyWith(units: units));
+}
+=== lib/weather/view/weather_page.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:weather_sample/search/search_page.dart';
+import 'package:weather_sample/settings/settings_page.dart';
+import 'package:weather_sample/theme/theme_cubit.dart';
+import 'package:weather_sample/weather/cubit/weather_cubit.dart';
+import 'package:weather_sample/weather/cubit/weather_state.dart';
+import 'package:weather_sample/weather/widgets/weather_widgets.dart';
+
+class WeatherPage extends StatelessWidget {
+  const WeatherPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => WeatherCubit(context.read()),
+      child: const WeatherView(),
+    );
+  }
+}
+
+class WeatherView extends StatelessWidget {
+  const WeatherView({super.key});
+
+  Future<void> _search(BuildContext context) async {
+    final city = await Navigator.of(context).push(SearchPage.route());
+    if (!context.mounted) return;
+    await context.read<WeatherCubit>().fetchWeather(city);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.of(context).push(SettingsPage.route()),
+          ),
+        ],
+      ),
+      body: BlocConsumer<WeatherCubit, WeatherState>(
+        listener: (context, state) {
+          if (state.status == WeatherStatus.success) {
+            context.read<ThemeCubit>().updateTheme(state.weather);
+          }
+        },
+        builder: (context, state) => switch (state.status) {
+          WeatherStatus.initial => const WeatherEmpty(),
+          WeatherStatus.loading => const WeatherLoading(),
+          WeatherStatus.failure => const WeatherError(),
+          WeatherStatus.success => WeatherPopulated(
+              weather: state.weather,
+              units: state.units,
+              onRefresh: () => context.read<WeatherCubit>().refreshWeather(),
+            ),
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _search(context),
+        child: const Icon(Icons.search),
+      ),
+    );
+  }
+}
+=== lib/weather/widgets/weather_widgets.dart
+import 'package:flutter/material.dart';
+import 'package:weather_sample/settings/temperature_units.dart';
+import 'package:weather_sample/util/date_format.dart';
+import 'package:weather_sample/weather/models/weather.dart';
+import 'package:weather_sample/weather/models/weather_condition.dart';
+
+class WeatherEmpty extends StatelessWidget {
+  const WeatherEmpty({super.key});
+
+  @override
+  Widget build(BuildContext context) =>
+      const Center(child: Text('Search for a city'));
+}
+
+class WeatherLoading extends StatelessWidget {
+  const WeatherLoading({super.key});
+
+  @override
+  Widget build(BuildContext context) =>
+      const Center(child: CircularProgressIndicator());
+}
+
+class WeatherError extends StatelessWidget {
+  const WeatherError({super.key});
+
+  @override
+  Widget build(BuildContext context) =>
+      const Center(child: Text('Something went wrong!'));
+}
+
+class WeatherPopulated extends StatelessWidget {
+  const WeatherPopulated({
+    required this.weather,
+    required this.units,
+    required this.onRefresh,
+    super.key,
+  });
+
+  final Weather weather;
+  final TemperatureUnits units;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView(
+        children: [
+          WeatherIcon(condition: weather.condition),
+          Text(weather.location),
+          Text(weather.temperature.format(units)),
+          LastUpdated(time: weather.lastUpdated),
+        ],
+      ),
+    );
+  }
+}
+
+class WeatherIcon extends StatelessWidget {
+  const WeatherIcon({required this.condition, super.key});
+
+  final WeatherCondition condition;
+
+  @override
+  Widget build(BuildContext context) => Text(condition.emoji);
+}
+
+class LastUpdated extends StatelessWidget {
+  const LastUpdated({required this.time, super.key});
+
+  final DateTime time;
+
+  @override
+  Widget build(BuildContext context) => Text('Updated ${time.shortTime}');
+}
+
+extension on WeatherCondition {
+  String get emoji => switch (this) {
+        WeatherCondition.clear => '☀️',
+        WeatherCondition.rainy => '🌧️',
+        WeatherCondition.cloudy => '☁️',
+        WeatherCondition.snowy => '🌨️',
+        WeatherCondition.unknown => '❓',
+      };
+}
+=== lib/weather/widgets/forecast_strip.dart
+import 'package:flutter/material.dart';
+import 'package:weather_sample/settings/temperature_units.dart';
+import 'package:weather_sample/util/date_format.dart';
+import 'package:weather_sample/weather/models/forecast.dart';
+
+class ForecastStrip extends StatelessWidget {
+  const ForecastStrip({required this.forecast, required this.units, super.key});
+
+  final Forecast forecast;
+  final TemperatureUnits units;
+
+  @override
+  Widget build(BuildContext context) {
+    final warmest = forecast.warmest;
+    return Row(
+      children: [
+        for (final day in forecast.days)
+          ForecastTile(day: day, units: units, highlighted: day == warmest),
+      ],
+    );
+  }
+}
+
+class ForecastTile extends StatelessWidget {
+  const ForecastTile({
+    required this.day,
+    required this.units,
+    this.highlighted = false,
+    super.key,
+  });
+
+  final DailyForecast day;
+  final TemperatureUnits units;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [
+          Text(day.day.weekday3),
+          Text(day.high.format(units)),
+          Text(day.low.format(units)),
+        ],
+      );
+}
+=== lib/search/search_page.dart
+import 'package:flutter/material.dart';
+import 'package:weather_sample/search/city_validator.dart';
+
+class SearchPage extends StatefulWidget {
+  const SearchPage._();
+
+  static Route<String> route() =>
+      MaterialPageRoute(builder: (_) => const SearchPage._());
+
+  @override
+  State<SearchPage> createState() => _SearchPageState();
+}
+
+class _SearchPageState extends State<SearchPage> {
+  final _controller = TextEditingController();
+  String? _error;
+
+  void _submit() {
+    final error = CityValidator.validate(_controller.text);
+    if (error != null) return setState(() => _error = error);
+    Navigator.of(context).pop(CityValidator.normalize(_controller.text));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('City search')),
+      body: TextField(
+        controller: _controller,
+        decoration: InputDecoration(errorText: _error),
+        onSubmitted: (_) => _submit(),
+      ),
+    );
+  }
+}
+=== lib/search/city_validator.dart
+abstract final class CityValidator {
+  static String? validate(String input) =>
+      normalize(input).isEmpty ? 'Enter a city' : null;
+
+  static String normalize(String input) => input.trim();
+}
+=== lib/util/date_format.dart
+extension DateFormatting on DateTime {
+  String get shortTime =>
+      '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+
+  String get weekday3 =>
+      const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][weekday - 1];
+}
+=== lib/util/debouncer.dart
+import 'dart:async';
+
+class Debouncer {
+  Debouncer(this.delay);
+
+  final Duration delay;
+  Timer? _timer;
+
+  void run(void Function() action) {
+    _timer?.cancel();
+    _timer = Timer(delay, action);
+  }
+
+  void dispose() => _timer?.cancel();
+}
+=== lib/util/logger.dart
+mixin Logs {
+  final List<String> logs = [];
+
+  void log(String message) => logs.add('${DateTime.now()} $message');
+}
+
+class AppLogger with Logs {
+  void info(String message) => log('INFO $message');
+
+  void error(Object error) => log('ERROR $error');
+}

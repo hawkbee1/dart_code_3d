@@ -1,2 +1,10 @@
-export 'view/sphere_scene_view.dart';
+export 'bloc/viewer_bloc.dart';
+export 'models/code_map_source.dart';
+export 'view/code_world_view.dart';
 export 'view/viewer_page.dart';
+export 'widgets/debug_overlay.dart';
+export 'widgets/viewer_hud.dart';
+export 'world/camera_pose.dart';
+export 'world/code_world.dart';
+export 'world/sphere_instance.dart';
+export 'world/world_transforms.dart';

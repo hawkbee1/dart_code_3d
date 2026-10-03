@@ -24,10 +24,6 @@
     "@homeOpenFile": {
         "description": "Button opening a code map file"
     },
-    "homeShowDemo": "3D demo",
-    "@homeShowDemo": {
-        "description": "Button showing the 3D demo"
-    },
     "homeSettingsTooltip": "Settings",
     "@homeSettingsTooltip": {
         "description": "Tooltip of the settings button"
@@ -299,5 +295,33 @@
     "optionFullResolutionNote": "Coming later. It downloads every dependency and needs much more time and memory, especially on phones and in browsers.",
     "@optionFullResolutionNote": {
         "description": "Note of a disabled rule option"
+    },
+    "homeOpenSample": "Open sample",
+    "@homeOpenSample": {
+        "description": "Home action opening the bundled sample code map"
+    },
+    "viewerOpening": "Opening the code map…",
+    "@viewerOpening": {
+        "description": "Shown while a code map is decoded"
+    },
+    "viewerNotACodeMap": "This file is not a code map",
+    "@viewerNotACodeMap": {
+        "description": "Title of the viewer failure screen"
+    },
+    "viewerBackHome": "Back to home",
+    "@viewerBackHome": {
+        "description": "Action of the viewer failure screen"
+    },
+    "viewerStats": "{spheres} spheres · {links} links",
+    "@viewerStats": {
+        "description": "HUD summary of the open map",
+        "placeholders": {
+            "spheres": {
+                "type": "int"
+            },
+            "links": {
+                "type": "int"
+            }
+        }
     }
 }

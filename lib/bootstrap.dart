@@ -2,7 +2,12 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
+import 'package:code_map_repository/code_map_repository.dart';
+import 'package:code_source_client/code_source_client.dart';
+import 'package:dart_code_3d/app/app.dart';
 import 'package:flutter/widgets.dart';
+import 'package:settings_repository/settings_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppBlocObserver extends BlocObserver {
   const new();
@@ -19,6 +24,19 @@ class AppBlocObserver extends BlocObserver {
     super.onError(bloc, error, stackTrace);
   }
 }
+
+/// Builds the app of [flavor] with its real repositories. [initialLocation]
+/// is the first route (the home screen by default).
+App buildApp(AppFlavor flavor, {String initialLocation = '/'}) => App(
+  settingsRepository: SettingsRepository(preferences: SharedPreferencesAsync()),
+  // Session 15 replaces the in-memory store with platform storage.
+  codeMapRepository: CodeMapRepository(
+    sourceClient: CodeSourceClient(),
+    store: InMemoryCodeMapStore(),
+  ),
+  flavor: flavor,
+  initialLocation: initialLocation,
+);
 
 Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
   // Plugins (shared_preferences, flutter_scene) need the binding first.

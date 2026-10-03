@@ -1,7 +1,9 @@
 import 'package:dart_code_3d/analysis/analysis.dart';
+import 'package:dart_code_3d/app/flavor.dart';
 import 'package:dart_code_3d/home/home.dart';
 import 'package:dart_code_3d/settings/settings.dart';
 import 'package:dart_code_3d/viewer/viewer.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -46,11 +48,23 @@ class NewAnalysisRoute extends GoRouteData with $NewAnalysisRoute {
       const NewAnalysisPage();
 }
 
-/// `/viewer`: the 3D view (a demo sphere until session 11).
+/// `/viewer`: the 3D view of the bundled sample, or of the local [file]
+/// (`/viewer?file=<path>`, development flavor only).
 @immutable
 class ViewerRoute extends GoRouteData with $ViewerRoute {
-  const new();
+  const new({this.file});
+
+  /// A local `.dc3d` path; ignored outside the development flavor.
+  final String? file;
 
   @override
-  Widget build(BuildContext context, GoRouterState state) => const ViewerPage();
+  Widget build(BuildContext context, GoRouterState state) {
+    final file = this.file;
+    final developer = context.read<AppFlavor>() == AppFlavor.development;
+    return ViewerPage(
+      source: file != null && developer
+          ? LocalFileCodeMapSource(file)
+          : CodeMapSource.sample,
+    );
+  }
 }

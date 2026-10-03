@@ -54,6 +54,16 @@ Flutter GPU, which flutter_scene renders through, is enabled in each native
 platform's project files, so no extra `flutter run` flag is needed. Flutter
 3.47.1 or newer is required.
 
+**Open sample** on the home screen shows the bundled map of a small weather app
+(`assets/samples/`, rebuilt by `tool/sample/build_sample.sh`).
+
+Development flavor only:
+
+- **F3** in the viewer shows frame statistics (fps, build and raster times, sphere count);
+  read them in a profile build.
+- `--dart-define=DC3D_OPEN=<path>` opens a local `.dc3d` at startup (native platforms), for
+  performance work on big maps.
+
 ---
 
 ## Running Tests 🧪
@@ -97,6 +107,15 @@ sane render, and compared with `visual_baselines/`. From the hawkbee root:
 ```sh
 $ tool/visual_test.sh            # compare; captures and diffs in build/visual/
 $ tool/visual_test.sh --update   # refresh the baselines, then look at them
+```
+
+### Performance
+
+`integration_test/perf` measures how long maps take to open and the frame times of the
+start view, in a profile build under Xvfb (a lower bound). From the hawkbee root:
+
+```sh
+$ tool/perf_test.sh [map.dc3d ...]   # report in build/perf/report.json
 ```
 
 ---
