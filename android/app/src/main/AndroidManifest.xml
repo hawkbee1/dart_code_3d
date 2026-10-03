@@ -3,6 +3,10 @@
         android:label="${appName}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- flutter_scene renders through Flutter GPU, which is off by default. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableFlutterGPU"
+            android:value="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
