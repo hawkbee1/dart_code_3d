@@ -1,9 +1,12 @@
-import 'package:material_ui/material_ui.dart';
-import 'package:dart_code_3d/counter/counter.dart';
 import 'package:dart_code_3d/l10n/l10n.dart';
+import 'package:dart_code_3d/viewer/viewer.dart';
+import 'package:material_ui/material_ui.dart';
 
 class App extends StatelessWidget {
-  const new({super.key});
+  const new({super.key, this.home = const ViewerPage()});
+
+  /// The first screen. Injectable so widget tests can avoid the GPU.
+  final Widget home;
 
   @override
   Widget build(BuildContext context) {
@@ -14,9 +17,9 @@ class App extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const CounterPage(),
+      home: home,
     );
   }
 }
