@@ -17,6 +17,7 @@ void main() {
     setUpAll(() {
       registerFallbackValue(AnalysisRules.defaults());
       registerFallbackValue(AppThemeMode.system);
+      registerFallbackValue(TouchControlsMode.auto);
     });
 
     setUp(() {
@@ -25,6 +26,9 @@ void main() {
           .thenAnswer((_) async => AppThemeMode.dark);
       when(() => repository.rules()).thenAnswer((_) async => imports);
       when(() => repository.setThemeMode(any())).thenAnswer((_) async {});
+      when(() => repository.touchControls())
+          .thenAnswer((_) async => TouchControlsMode.always);
+      when(() => repository.setTouchControls(any())).thenAnswer((_) async {});
       when(() => repository.setRules(any())).thenAnswer((_) async {});
       when(() => repository.resetRules()).thenAnswer((_) async {});
     });
@@ -43,9 +47,21 @@ void main() {
         SettingsState(
           status: SettingsStatus.ready,
           themeMode: AppThemeMode.dark,
+          touchControls: TouchControlsMode.always,
           rules: imports,
         ),
       ],
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'changes and stores the touch controls mode',
+      build: build,
+      act: (bloc) =>
+          bloc.add(const SettingsTouchControlsChanged(TouchControlsMode.never)),
+      expect: () => [SettingsState(touchControls: TouchControlsMode.never)],
+      verify: (_) =>
+          verify(() => repository.setTouchControls(TouchControlsMode.never))
+              .called(1),
     );
 
     blocTest<SettingsBloc, SettingsState>(
@@ -84,6 +100,10 @@ void main() {
       expect(
         SettingsThemeModeChanged([AppThemeMode.dark].single),
         SettingsThemeModeChanged([AppThemeMode.dark].single),
+      );
+      expect(
+        SettingsTouchControlsChanged([TouchControlsMode.never].single),
+        SettingsTouchControlsChanged([TouchControlsMode.never].single),
       );
       expect(const SettingsStarted().props, isEmpty);
     });

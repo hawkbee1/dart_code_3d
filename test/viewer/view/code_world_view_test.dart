@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:code_graph/code_graph.dart';
 import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/viewer/viewer.dart';
-import 'package:flutter_scene/scene.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -12,12 +11,12 @@ import '../../helpers/helpers.dart';
 
 void main() {
   group(CodeWorldView, () {
-    late List<(CodeWorld, PerspectiveCamera)> built;
+    late List<(CodeWorld, FlyNavigator)> built;
 
     setUp(() => built = []);
 
-    Widget scene(BuildContext context, CodeWorld world, PerspectiveCamera c) {
-      built.add((world, c));
+    Widget scene(BuildContext context, CodeWorld world, FlyNavigator n) {
+      built.add((world, n));
       return Text('${world.instanceCount} spheres');
     }
 
@@ -48,9 +47,9 @@ void main() {
       await tester.pump();
 
       expect(find.text('3 spheres'), findsOneWidget);
-      final (world, camera) = built.single;
+      final (world, navigator) = built.single;
       expect(world.colors, CodeWorldColors.light);
-      expect(camera.position, world.startPose.position);
+      expect(navigator.position, world.startPose.position);
     });
 
     testWidgets('keeps the world until the map or the colors change', (

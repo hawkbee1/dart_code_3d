@@ -67,6 +67,18 @@ void main() {
           .called(1);
     });
 
+    testWidgets('changes the touch controls mode', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.text('Never'));
+
+      verify(
+        () => bloc.add(
+          const SettingsTouchControlsChanged(TouchControlsMode.never),
+        ),
+      ).called(1);
+    });
+
     testWidgets('toggles a boolean rule', (tester) async {
       await pump(tester);
 
