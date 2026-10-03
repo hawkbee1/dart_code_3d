@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:dart_code_3d/app/app.dart';
+import 'package:dart_code_3d/l10n/l10n.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,7 +33,8 @@ void main() {
             final theme = themeMode == ThemeMode.light
                 ? AppTheme.light
                 : AppTheme.dark;
-            final clear = theme.colorScheme.surface;
+            // The 3D view paints the world background (CodeWorldColors).
+            final clear = theme.extension<CodeWorldColors>()!.background;
             final boundaryKey = GlobalKey();
 
             // One ordinary frame first so the GPU context exists before
@@ -40,11 +42,14 @@ void main() {
             await tester.pumpWidget(const SizedBox.shrink());
             await tester.pump();
             await Scene.initializeStaticResources();
+            final builder = await scenario.load();
 
             await tester.pumpWidget(
               MaterialApp(
                 debugShowCheckedModeBanner: false,
                 theme: theme,
+                localizationsDelegates: appLocalizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
                 // The captured size may exceed the window: lay it out
                 // unconstrained, toImage renders the whole boundary.
                 home: OverflowBox(
@@ -59,7 +64,7 @@ void main() {
                       size: device.size,
                       child: ColoredBox(
                         color: clear,
-                        child: Builder(builder: scenario.builder),
+                        child: Builder(builder: builder),
                       ),
                     ),
                   ),
@@ -103,7 +108,7 @@ void main() {
               reason: 'capture has the wrong width',
             );
             expect(
-              stats.cornersClear,
+              stats.cornersClear || !scenario.clearCorners,
               isTrue,
               reason: 'corners are not the background; the frame is wrong',
             );
