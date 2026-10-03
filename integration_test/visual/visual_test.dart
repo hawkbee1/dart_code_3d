@@ -114,7 +114,7 @@ void main() {
             );
             expect(
               stats.centerCoverage,
-              greaterThan(0.05),
+              greaterThanOrEqualTo(scenario.minCenterCoverage),
               reason: 'little or nothing drew in the center',
             );
             expect(
