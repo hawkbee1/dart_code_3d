@@ -1,4 +1,6 @@
+import 'package:dart_code_3d/settings/settings.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'pump_app.dart';
@@ -34,6 +36,9 @@ void goldenTest(
   Iterable<ThemeMode> themeModes = const [ThemeMode.light, ThemeMode.dark],
   Iterable<Locale> locales = const [Locale('en')],
   Future<void> Function(WidgetTester tester)? pump,
+  SettingsBloc Function()? settingsBloc,
+  GoRouter Function()? router,
+  double textScale = 1,
 }) {
   for (final device in devices) {
     for (final themeMode in themeModes) {
@@ -41,7 +46,9 @@ void goldenTest(
         final localeSuffix = locale.languageCode == 'en'
             ? ''
             : '_${locale.languageCode}';
-        final variant = '${device.name}_${themeMode.name}$localeSuffix';
+        final scaleSuffix = textScale == 1 ? '' : '_x$textScale';
+        final variant =
+            '${device.name}_${themeMode.name}$localeSuffix$scaleSuffix';
         testWidgets('$description ($variant)', tags: TestTag.golden, (
           tester,
         ) async {
@@ -50,7 +57,14 @@ void goldenTest(
             ..devicePixelRatio = 1;
           addTearDown(tester.view.reset);
 
-          await tester.pumpApp(builder(), themeMode: themeMode, locale: locale);
+          await tester.pumpApp(
+            builder(),
+            themeMode: themeMode,
+            locale: locale,
+            settingsBloc: settingsBloc?.call(),
+            router: router?.call(),
+            textScale: textScale,
+          );
           await tester.pump();
           if (pump != null) await pump(tester);
 
