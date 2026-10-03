@@ -136,7 +136,7 @@ Update the `CFBundleLocalizations` array in the `Info.plist` at `ios/Runner/Info
     <key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>
-		<string>es</string>
+		<string>fr</string>
 	</array>
 
     ...
@@ -150,24 +150,20 @@ Update the `CFBundleLocalizations` array in the `Info.plist` at `ios/Runner/Info
 ├── l10n
 │   ├── arb
 │   │   ├── app_en.arb
-│   │   └── app_es.arb
+│   │   └── app_fr.arb
 ```
 
 1. Add the translated strings to the new `.arb` file:
 
-`app_es.arb`
+`app_fr.arb`
 
 ```arb
 {
-    "@@locale": "es",
-    "counterAppBarTitle": "Contador",
-    "@counterAppBarTitle": {
-        "description": "Texto mostrado en la AppBar de la página del contador"
-    },
-    "helloWorld": "Hola Mundo",
-    "@helloWorld": {
-        "description": "Saludo Hola Mundo."
-    }    
+    "@@locale": "fr",
+    "viewerPreparingScene": "Préparation de la scène 3D…",
+    "@viewerPreparingScene": {
+        "description": "Affiché pendant que le moteur 3D charge ses ressources"
+    }
 }
 ```
 

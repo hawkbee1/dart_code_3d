@@ -1,0 +1,11 @@
+{
+    "@@locale": "fr",
+    "appTitle": "dart_code_3D",
+    "@appTitle": {
+        "description": "Nom de l'application, affiché dans la barre d'application"
+    },
+    "viewerPreparingScene": "Préparation de la scène 3D…",
+    "@viewerPreparingScene": {
+        "description": "Affiché pendant que le moteur 3D charge ses shaders et ses ressources"
+    }
+}
