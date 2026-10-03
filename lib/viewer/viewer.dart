@@ -1,5 +1,9 @@
 export 'bloc/viewer_bloc.dart';
 export 'models/code_map_source.dart';
+export 'navigation/collisions.dart';
+export 'navigation/containers.dart';
+export 'navigation/fly_controls.dart';
+export 'navigation/fly_navigator.dart';
 export 'view/code_world_view.dart';
 export 'view/viewer_page.dart';
 export 'widgets/debug_overlay.dart';

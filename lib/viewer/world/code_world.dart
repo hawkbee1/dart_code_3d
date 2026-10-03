@@ -2,6 +2,7 @@ import 'dart:ui' show Size;
 
 import 'package:code_graph/code_graph.dart';
 import 'package:dart_code_3d/app/theme/code_world_colors.dart';
+import 'package:dart_code_3d/viewer/navigation/collisions.dart';
 import 'package:dart_code_3d/viewer/world/camera_pose.dart';
 import 'package:dart_code_3d/viewer/world/sphere_instance.dart';
 import 'package:dart_code_3d/viewer/world/world_transforms.dart';
@@ -24,6 +25,14 @@ class CodeWorld {
       instances: sphereInstances(map, positions, colors),
       radius: worldRadius(map),
       startPose: computeStartPose(map, positions),
+      obstacles: [
+        for (final node in map.graph.topLevel)
+          if (node.kind == CodeNodeKind.externalPackage)
+            (
+              center: positions[node.id]!,
+              radius: map.placements[node.id]!.radius,
+            ),
+      ],
     );
   }
 
@@ -34,6 +43,7 @@ class CodeWorld {
     required this.instances,
     required this.radius,
     required this.startPose,
+    required this.obstacles,
   });
 
   /// The code map shown.
@@ -54,6 +64,9 @@ class CodeWorld {
 
   /// Where the camera starts: in front of the entry node.
   final CameraPose startPose;
+
+  /// The solid spheres (external packages) the camera cannot enter.
+  final List<Obstacle> obstacles;
 
   /// The number of spheres drawn.
   int get instanceCount => instances.length;

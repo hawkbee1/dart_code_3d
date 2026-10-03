@@ -3,20 +3,25 @@ import 'dart:async';
 import 'package:code_graph/code_graph.dart';
 import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/l10n/l10n.dart';
+import 'package:dart_code_3d/viewer/navigation/fly_controls.dart';
+import 'package:dart_code_3d/viewer/navigation/fly_navigator.dart';
 import 'package:dart_code_3d/viewer/world/code_world.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:settings_repository/settings_repository.dart';
 
-/// Builds the 3D area for [world], seen through [camera].
+/// Builds the 3D area for [world], seen from [navigator]'s camera.
 typedef CodeWorldSceneBuilder = Widget Function(
   BuildContext context,
   CodeWorld world,
-  PerspectiveCamera camera,
+  FlyNavigator navigator,
 );
 
-/// Shows [map] in 3D once flutter_scene's static resources are loaded.
+/// Shows [map] in 3D once flutter_scene's static resources are loaded, and
+/// lets the user fly through it.
 ///
-/// The [CodeWorld] is rebuilt when the map or the theme colors change.
+/// The [CodeWorld] is rebuilt when the map or the theme colors change; the
+/// [FlyNavigator] (the camera) only when the map changes.
 /// [initialize] and [sceneBuilder] are injectable because widget tests have
 /// no GPU context.
 class CodeWorldView extends StatefulWidget {
@@ -25,6 +30,9 @@ class CodeWorldView extends StatefulWidget {
     super.key,
     this.initialize = defaultInitialize,
     this.sceneBuilder = buildCodeWorldScene,
+    this.touchControls = TouchControlsMode.auto,
+    this.onContainerChanged,
+    this.onHelp,
   });
 
   /// flutter_scene's static resources loader.
@@ -40,6 +48,15 @@ class CodeWorldView extends StatefulWidget {
   /// Builds the 3D area once [initialize] has completed.
   final CodeWorldSceneBuilder sceneBuilder;
 
+  /// When the on-screen touch controls are shown.
+  final TouchControlsMode touchControls;
+
+  /// Called when the camera enters or leaves a sphere.
+  final ValueChanged<String?>? onContainerChanged;
+
+  /// Shows the controls help (the `?` key).
+  final VoidCallback? onHelp;
+
   @override
   State<CodeWorldView> createState() => _CodeWorldViewState();
 }
@@ -47,6 +64,7 @@ class CodeWorldView extends StatefulWidget {
 class _CodeWorldViewState extends State<CodeWorldView> {
   bool _ready = false;
   CodeWorld? _world;
+  FlyNavigator? _navigator;
 
   @override
   void initState() {
@@ -68,6 +86,17 @@ class _CodeWorldViewState extends State<CodeWorldView> {
     return _world = CodeWorld(widget.map, colors);
   }
 
+  FlyNavigator _navigatorFor(CodeWorld world) {
+    final current = _navigator;
+    if (current != null && identical(current.world.map, world.map)) {
+      return current;
+    }
+    return _navigator = FlyNavigator(
+      world: world,
+      onContainerChanged: (id) => widget.onContainerChanged?.call(id),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.worldColors;
@@ -87,14 +116,14 @@ class _CodeWorldViewState extends State<CodeWorldView> {
       );
     }
     final world = _worldFor(colors);
+    final navigator = _navigatorFor(world);
     return ColoredBox(
       color: colors.background,
-      child: LayoutBuilder(
-        builder: (context, constraints) => widget.sceneBuilder(
-          context,
-          world,
-          world.camera(constraints.biggest),
-        ),
+      child: FlyControls(
+        navigator: navigator,
+        touchControls: widget.touchControls,
+        onHelp: widget.onHelp,
+        child: widget.sceneBuilder(context, world, navigator),
       ),
     );
   }
@@ -104,11 +133,18 @@ class _CodeWorldViewState extends State<CodeWorldView> {
 // Needs a GPU context, which `flutter test` does not have; covered by the 3D
 // visual tests (integration_test/visual).
 
-/// Draws [world]'s scene through [camera].
+/// Draws [world]'s scene from [navigator]'s camera, stepping the flight
+/// every frame.
 Widget buildCodeWorldScene(
   BuildContext context,
   CodeWorld world,
-  PerspectiveCamera camera,
-) => SceneView(world.scene, camera: camera);
+  FlyNavigator navigator,
+) => LayoutBuilder(
+  builder: (context, constraints) => SceneView(
+    world.scene,
+    cameraBuilder: (_) => navigator.camera(constraints.biggest),
+    onTick: (_, deltaSeconds) => navigator.step(deltaSeconds),
+  ),
+);
 
 // coverage:ignore-end
