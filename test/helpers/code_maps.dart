@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:code_graph/code_graph.dart';
+import 'package:code_map_repository/code_map_repository.dart';
 
 /// A small world: `main` (the entry) in front, class `A` with a method
 /// inside, and an external package far away.
@@ -184,5 +185,30 @@ CodeMap longNamesMap() {
       'A.B.C': Placement(x: 0, y: 0, z: 0, radius: 3),
       'A.B.C.m': Placement(x: 0, y: 0, z: 0, radius: 1),
     },
+  );
+}
+
+/// A stored code map file of [map] (the [worldMap] by default), with [id].
+CodeMapFile codeMapFileOf({
+  String id = '1-a',
+  String? name,
+  CodeMap? map,
+  DateTime? createdAt,
+}) {
+  final source = map ?? worldMap();
+  final project = source.graph.project;
+  return CodeMapFile(
+    id: id,
+    name: name ?? project.source.label,
+    bytes: const CodeMapCodec().encodeToBytes(source),
+    project: createdAt == null
+        ? project
+        : ProjectInfo(
+            generator: project.generator,
+            source: project.source,
+            createdAt: createdAt,
+            entryNodeId: project.entryNodeId,
+            stats: project.stats,
+          ),
   );
 }

@@ -1,17 +1,15 @@
-import 'package:code_map_repository/code_map_repository.dart';
 import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/home/home.dart';
 import 'package:dart_code_3d/settings/settings.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:settings_repository/settings_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
-class _MockCodeMapRepository extends Mock implements CodeMapRepository;
+import '../../helpers/helpers.dart';
 
 void main() {
   group(App, () {
@@ -31,7 +29,7 @@ void main() {
       await tester.pumpWidget(
         App(
           settingsRepository: repository,
-          codeMapRepository: _MockCodeMapRepository(),
+          codeMapRepository: repositoryWith(),
         ),
       );
       await tester.pumpAndSettle();
@@ -41,11 +39,44 @@ void main() {
       expect(app.themeMode, ThemeMode.dark);
     });
 
+    testWidgets('provides what the screens need from the platform', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        App(
+          settingsRepository: repository,
+          codeMapRepository: repositoryWith(),
+          capabilities: PlatformCapabilities.web,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(HomePage));
+      expect(context.read<PlatformCapabilities>(), PlatformCapabilities.web);
+      expect(context.read<FileDialogs>(), isA<FilePickerDialogs>());
+      expect(context.read<FileExporter>(), isA<PlatformFileExporter>());
+    });
+
+    testWidgets('uses the platform it runs on by default', (tester) async {
+      await tester.pumpWidget(
+        App(
+          settingsRepository: repository,
+          codeMapRepository: repositoryWith(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.element(find.byType(HomePage)).read<PlatformCapabilities>(),
+        PlatformCapabilities.current,
+      );
+    });
+
     testWidgets('applies a theme change immediately', (tester) async {
       await tester.pumpWidget(
         App(
           settingsRepository: repository,
-          codeMapRepository: _MockCodeMapRepository(),
+          codeMapRepository: repositoryWith(),
         ),
       );
       await tester.pumpAndSettle();
@@ -72,7 +103,7 @@ void main() {
       await tester.pumpWidget(
         App(
           settingsRepository: repository,
-          codeMapRepository: _MockCodeMapRepository(),
+          codeMapRepository: repositoryWith(),
         ),
       );
       await tester.pumpAndSettle();
@@ -86,7 +117,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(
         App(
-          codeMapRepository: _MockCodeMapRepository(),
+          codeMapRepository: repositoryWith(),
           settingsRepository: SettingsRepository(
             preferences: SharedPreferencesAsync(),
           ),

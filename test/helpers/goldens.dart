@@ -1,3 +1,5 @@
+import 'package:code_map_repository/code_map_repository.dart';
+import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/settings/settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -26,6 +28,9 @@ enum GoldenDevice {
 /// [builder] realistic content. Text renders in the real app font, loaded by
 /// `test/flutter_test_config.dart`.
 ///
+/// [repository] and [capabilities] stand for the app's services (a desktop's
+/// by default).
+///
 /// [setUp] runs inside each test before pumping, for example to stub a mock.
 /// [pump] runs after the first frame, for example to advance a state.
 void goldenTest(
@@ -38,6 +43,8 @@ void goldenTest(
   Future<void> Function(WidgetTester tester)? pump,
   SettingsBloc Function()? settingsBloc,
   GoRouter Function()? router,
+  CodeMapRepository Function()? repository,
+  PlatformCapabilities capabilities = PlatformCapabilities.desktop,
   double textScale = 1,
 }) {
   for (final device in devices) {
@@ -63,6 +70,8 @@ void goldenTest(
             locale: locale,
             settingsBloc: settingsBloc?.call(),
             router: router?.call(),
+            repository: repository?.call(),
+            capabilities: capabilities,
             textScale: textScale,
           );
           await tester.pump();

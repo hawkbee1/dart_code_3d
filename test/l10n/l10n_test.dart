@@ -1,4 +1,3 @@
-import 'package:dart_code_3d/analysis/analysis.dart';
 import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/l10n/l10n.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +19,9 @@ void main() {
           localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: AppTheme.light,
-          home: const NewAnalysisPage(),
+          home: Builder(
+            builder: (context) => Text(context.l10n.newAnalysisTitle),
+          ),
         ),
       );
 

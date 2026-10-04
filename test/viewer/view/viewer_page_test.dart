@@ -80,6 +80,29 @@ void main() {
       verify(() => router.go('/')).called(1);
     });
 
+    testWidgets('explains a stored map that is gone', (tester) async {
+      final router = _MockGoRouter();
+      when(() => router.go(any())).thenReturn(null);
+      await tester.pumpApp(
+        viewerViewWith(
+          viewerBlocWith(
+            const ViewerFailure('', kind: ViewerFailureKind.missing),
+          ),
+        ),
+        router: router,
+      );
+
+      expect(find.text('This map is not stored any more'), findsOneWidget);
+      expect(
+        find.textContaining('maps are kept in memory only'),
+        findsOneWidget,
+      );
+      expect(find.text('This file is not a code map'), findsNothing);
+
+      await tester.tap(find.text('Back to home'));
+      verify(() => router.go('/')).called(1);
+    });
+
     testWidgets('shows the map, its name and its size', (tester) async {
       await tester.pumpApp(
         viewerViewWith(viewerBlocWith(ViewerReady(map: map))),
