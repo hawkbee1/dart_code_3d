@@ -21,6 +21,10 @@ import 'package:settings_repository/settings_repository.dart';
 /// | drag | look |
 /// | Home | back to the start pose |
 /// | V | [onToggleViewMode] |
+/// | Enter | [onSelectCenter] |
+/// | Esc | [onDeselect] |
+/// | L | [onToggleLabels] |
+/// | / or Ctrl/Cmd+F | [onSearch] |
 /// | ? | [onHelp] |
 ///
 /// The area takes the keyboard focus when it appears and when tapped, so
@@ -33,6 +37,12 @@ class FlyControls extends StatefulWidget {
     super.key,
     this.onHelp,
     this.onToggleViewMode,
+    this.onTap,
+    this.onSelectCenter,
+    this.onDeselect,
+    this.onToggleLabels,
+    this.onSearch,
+    this.hideTouchControls = false,
     this.platform,
   });
 
@@ -51,6 +61,26 @@ class FlyControls extends StatefulWidget {
   /// Switches between interior and window view (the `V` key).
   final VoidCallback? onToggleViewMode;
 
+  /// A tap (or click) on the 3D area, at a position of a view of that size.
+  final void Function(Offset position, Size size)? onTap;
+
+  /// `Enter`: select what is under the crosshair, in the middle of a view of
+  /// that size.
+  final ValueChanged<Size>? onSelectCenter;
+
+  /// `Esc`: deselect.
+  final VoidCallback? onDeselect;
+
+  /// `L`: show or hide the labels.
+  final VoidCallback? onToggleLabels;
+
+  /// `/` or Ctrl/Cmd+F: open the search.
+  final VoidCallback? onSearch;
+
+  /// Whether to hide the touch controls, whatever the setting says (for
+  /// example while a sheet covers them).
+  final bool hideTouchControls;
+
   /// The platform deciding automatic touch controls
   /// ([defaultTargetPlatform] by default).
   final TargetPlatform? platform;
@@ -63,6 +93,7 @@ class _FlyControlsState extends State<FlyControls> {
   final _focusNode = FocusNode(debugLabel: 'fly controls');
   bool _keyboardUsed = false;
   bool _lastPointerWasTouch = false;
+  Size _size = Size.zero;
 
   @override
   void dispose() {
@@ -70,7 +101,10 @@ class _FlyControlsState extends State<FlyControls> {
     super.dispose();
   }
 
-  bool get _showTouchControls => switch (widget.touchControls) {
+  bool get _showTouchControls =>
+      !widget.hideTouchControls && _touchControlsWanted;
+
+  bool get _touchControlsWanted => switch (widget.touchControls) {
     TouchControlsMode.always => true,
     TouchControlsMode.never => false,
     TouchControlsMode.auto =>
@@ -107,8 +141,21 @@ class _FlyControlsState extends State<FlyControls> {
       if (event is KeyDownEvent) widget.navigator.reset();
     } else if (key == LogicalKeyboardKey.keyV) {
       if (event is KeyDownEvent) widget.onToggleViewMode?.call();
+    } else if (key == LogicalKeyboardKey.keyL) {
+      if (event is KeyDownEvent) widget.onToggleLabels?.call();
+    } else if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter) {
+      if (event is KeyDownEvent) widget.onSelectCenter?.call(_size);
+    } else if (key == LogicalKeyboardKey.escape) {
+      if (event is KeyDownEvent) widget.onDeselect?.call();
+    } else if (key == LogicalKeyboardKey.keyF &&
+        (HardwareKeyboard.instance.isControlPressed ||
+            HardwareKeyboard.instance.isMetaPressed)) {
+      if (event is KeyDownEvent) widget.onSearch?.call();
     } else if (event.character == '?') {
       if (event is KeyDownEvent) widget.onHelp?.call();
+    } else if (event.character == '/') {
+      if (event is KeyDownEvent) widget.onSearch?.call();
     } else {
       return KeyEventResult.ignored;
     }
@@ -133,31 +180,41 @@ class _FlyControlsState extends State<FlyControls> {
       onKeyEvent: _onKey,
       child: Listener(
         onPointerDown: _onPointerDown,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onPanUpdate: (details) => widget.navigator.look(details.delta),
-              child: widget.child,
-            ),
-            if (_showTouchControls) ...[
-              PositionedDirectional(
-                start: spacing.md,
-                bottom: spacing.xl * 2,
-                child: MoveControl(
-                  onThrottle: (value) => input.throttle = value,
-                  onUp: (pressed) => input.up = pressed,
-                  onDown: (pressed) => input.down = pressed,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            _size = constraints.biggest;
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  // Selecting and looking by pointer: not part of semantics.
+                  excludeFromSemantics: true,
+                  onTapUp: (details) =>
+                      widget.onTap?.call(details.localPosition, _size),
+                  onPanUpdate: (details) =>
+                      widget.navigator.look(details.delta),
+                  child: widget.child,
                 ),
-              ),
-              PositionedDirectional(
-                end: spacing.md,
-                bottom: spacing.xl * 2,
-                child: Trackball(onRate: (rate) => input.lookRate = rate),
-              ),
-            ],
-          ],
+                if (_showTouchControls) ...[
+                  PositionedDirectional(
+                    start: spacing.md,
+                    bottom: spacing.xl * 2,
+                    child: MoveControl(
+                      onThrottle: (value) => input.throttle = value,
+                      onUp: (pressed) => input.up = pressed,
+                      onDown: (pressed) => input.down = pressed,
+                    ),
+                  ),
+                  PositionedDirectional(
+                    end: spacing.md,
+                    bottom: spacing.xl * 2,
+                    child: Trackball(onRate: (rate) => input.lookRate = rate),
+                  ),
+                ],
+              ],
+            );
+          },
         ),
       ),
     );
@@ -380,6 +437,10 @@ class ControlsHelpDialog extends StatelessWidget {
       (icons(const [Icons.mouse_outlined]), l10n.viewerKeyLook),
       (keys('Home'), l10n.viewerKeyHome),
       (keys('V'), l10n.viewerKeyView),
+      (keys('Enter'), l10n.viewerKeySelect),
+      (keys('Esc'), l10n.viewerKeyDeselect),
+      (keys('L'), l10n.viewerKeyLabels),
+      (keys('/ · Ctrl+F'), l10n.viewerKeySearch),
       (keys('?'), l10n.viewerKeyHelp),
     ];
     return AlertDialog(
@@ -401,6 +462,7 @@ class ControlsHelpDialog extends StatelessWidget {
                 ),
               ),
             const Divider(),
+            Text(l10n.viewerTapSelect),
             Text(l10n.viewerTouchLook),
             Text(l10n.viewerTouchMove),
           ],

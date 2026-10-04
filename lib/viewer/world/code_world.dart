@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show Size;
 
 import 'package:code_graph/code_graph.dart';
@@ -5,8 +6,10 @@ import 'package:dart_code_3d/app/theme/code_world_colors.dart';
 import 'package:dart_code_3d/viewer/navigation/collisions.dart';
 import 'package:dart_code_3d/viewer/world/camera_pose.dart';
 import 'package:dart_code_3d/viewer/world/inverted_mesh.dart';
+import 'package:dart_code_3d/viewer/world/picking.dart';
 import 'package:dart_code_3d/viewer/world/scene_content.dart';
 import 'package:dart_code_3d/viewer/world/sphere_instance.dart';
+import 'package:dart_code_3d/viewer/world/view_camera.dart';
 import 'package:dart_code_3d/viewer/world/visibility.dart';
 import 'package:dart_code_3d/viewer/world/world_transforms.dart';
 import 'package:flutter/foundation.dart';
@@ -25,7 +28,7 @@ class CodeWorld {
   /// Derives the world of [map], colored with [colors]. It starts showing
   /// the top level with every link kind.
   factory(CodeMap map, CodeWorldColors colors) {
-    final positions = worldPositions(map);
+    final positions = cachedWorldPositions(map);
     final index = VisibilityIndex.of(map);
     return CodeWorld._(
       map: map,
@@ -85,6 +88,7 @@ class CodeWorld {
 
   VisibleWorld _visible;
   ViewMode _mode = ViewMode.interior;
+  String? _selectedId;
 
   /// What is drawn now.
   late SceneContent content;
@@ -97,6 +101,45 @@ class CodeWorld {
 
   /// The sphere the camera is in (the world when null), as last shown.
   String? get containerId => _visible.openContainers.lastOrNull;
+
+  /// The spheres a click can hit: everything drawn closed.
+  Iterable<Pickable> get pickables => [
+    for (final sphere in [
+      ...content.solid,
+      ...content.ghosts,
+      ...content.packages,
+    ])
+      (id: sphere.nodeId, center: sphere.center, radius: sphere.radius),
+  ];
+
+  /// The selected node (null for none), even when it is hidden inside a
+  /// closed sphere.
+  String? get selectedId => _selectedId;
+
+  /// The sphere that shows the selection: the selected node itself when it
+  /// is drawn, otherwise its nearest drawn ancestor (the sphere it is inside
+  /// of), or null when nothing selected is drawn.
+  SphereInstance? get highlighted {
+    final selected = _selectedId;
+    if (selected == null) return null;
+    final drawn = _visible.visibleSpheres.toSet();
+    for (final id in index.chainOf(selected)) {
+      if (!drawn.contains(id)) continue;
+      return [
+        ...content.solid,
+        ...content.ghosts,
+        ...content.packages,
+      ].firstWhere((sphere) => sphere.nodeId == id);
+    }
+    return null;
+  }
+
+  /// Selects node [id] (nothing when null): [highlighted] shows it.
+  void select(String? id) {
+    if (id == _selectedId) return;
+    _selectedId = id;
+    _syncHighlight();
+  }
 
   /// Shows [visible] (with the shells drawn for [mode]): rebuilds the
   /// content, and the scene when it exists.
@@ -134,13 +177,17 @@ class CodeWorld {
     return PerspectiveCamera(
       position: at.position,
       target: at.target,
-      fovRadiansY: fovYForAspect(
-        size.height == 0 ? 1 : size.width / size.height,
-      ),
-      fovNear: 0.05,
+      fovRadiansY: fovYFor(size),
+      fovNear: nearDepth,
       fovFar: far,
     );
   }
+
+  /// The vertical field of view for a view of [size] (wider on portrait
+  /// screens), shared by the renderer's camera and the [ViewCamera] that
+  /// labels and picking use.
+  double fovYFor(Size size) =>
+      fovYForAspect(size.height == 0 ? 1 : size.width / size.height);
 
   // coverage:ignore-start
   // Needs a GPU context, which `flutter test` does not have; covered by the
@@ -152,6 +199,9 @@ class CodeWorld {
   late Vector3 _cameraPosition = startPose.position;
   final _linkGeometries = <LinkBatch, LineSegmentsGeometry>{};
   final _shellMaterials = <PhysicallyBasedMaterial>[];
+  Node? _highlightNode;
+  Matrix4 _highlightBase = Matrix4.identity();
+  double _time = 0;
 
   /// The scene, built on first use: read it only after
   /// `Scene.initializeStaticResources()` completed.
@@ -159,6 +209,7 @@ class CodeWorld {
     final existing = _scene;
     if (existing != null) return existing;
     final created = Scene();
+    created.highlightStyle.thickness = 4;
     _populate(created);
     return _scene = created;
   }
@@ -174,6 +225,14 @@ class CodeWorld {
     _animate = animate;
     _cameraPosition = cameraPosition.clone();
     _shellAge += deltaSeconds;
+    _time += deltaSeconds;
+    // The selection breathes a little (not when animations are disabled).
+    final highlight = _highlightNode;
+    if (highlight != null) {
+      final pulse = animate ? 1 + 0.04 * math.sin(_time * 4) : 1.0;
+      highlight.localTransform = _highlightBase.clone()
+        ..scaleByDouble(pulse, pulse, pulse, 1);
+    }
     for (final (i, material) in _shellMaterials.indexed) {
       final shell = content.shells[i];
       final alpha = shellOpacity(_shellAge, shell.opacity, animate: animate);
@@ -202,19 +261,73 @@ class CodeWorld {
     ),
   );
 
+  static PhysicallyBasedMaterial _material({
+    double roughness = 0.45,
+    double metallic = 0,
+    double alpha = 1,
+  }) => PhysicallyBasedMaterial()
+    ..roughnessFactor = roughness
+    ..metallicFactor = metallic
+    ..baseColorFactor = Vector4(1, 1, 1, alpha)
+    ..alphaMode = alpha < 1 ? AlphaMode.blend : AlphaMode.opaque;
+
+  /// A sphere for the highlight: looks like the instance it covers.
+  late final Geometry _unitSphere = SphereGeometry(
+    radius: 1,
+    segments: 48,
+    rings: 24,
+  );
+
+  /// Puts the outlined copy of the highlighted sphere in the scene (and takes
+  /// the previous one out).
+  void _syncHighlight() {
+    final scene = _scene;
+    if (scene != null) _updateHighlight(scene);
+  }
+
+  void _updateHighlight(Scene scene) {
+    final previous = _highlightNode;
+    if (previous != null) scene.remove(previous);
+    _highlightNode = null;
+    final target = highlighted;
+    if (target == null) return;
+    // The same material as the instance, so the copy is not seen: only the
+    // outline Node.highlightColor draws around it is.
+    final material =
+        (content.ghosts.contains(target)
+              ? _material(roughness: 0.6, alpha: 0.35)
+              : content.packages.contains(target)
+              ? _material(roughness: 0.3, metallic: 0.9)
+              : _material())
+          ..baseColorFactor = target.color;
+    _highlightBase = target.transform;
+    _highlightNode =
+        Node(
+            name: 'selection',
+            localTransform: _highlightBase,
+            mesh: Mesh(_unitSphere, material),
+            // The outline pass takes the color as it appears on screen (sRGB),
+            // whatever the docs of Node.highlightColor say.
+          )
+          ..highlightColor = Vector4(
+            colors.selection.r,
+            colors.selection.g,
+            colors.selection.b,
+            colors.selection.a,
+          );
+    scene.add(_highlightNode!);
+  }
+
   void _populate(Scene scene) {
     scene.removeAll();
     _shellMaterials.clear();
     _linkGeometries.clear();
+    _highlightNode = null;
     PhysicallyBasedMaterial material({
       double roughness = 0.45,
       double metallic = 0,
       double alpha = 1,
-    }) => PhysicallyBasedMaterial()
-      ..roughnessFactor = roughness
-      ..metallicFactor = metallic
-      ..baseColorFactor = Vector4(1, 1, 1, alpha)
-      ..alphaMode = alpha < 1 ? AlphaMode.blend : AlphaMode.opaque;
+    }) => _material(roughness: roughness, metallic: metallic, alpha: alpha);
 
     void spheres(String name, List<SphereInstance> list, Material material) {
       if (list.isEmpty) return;
@@ -287,6 +400,7 @@ class CodeWorld {
         ),
       );
     }
+    _updateHighlight(scene);
     // New shells start from the current animation state (invisible, then
     // fading in), not at full opacity.
     tick(0, animate: _animate, cameraPosition: _cameraPosition);

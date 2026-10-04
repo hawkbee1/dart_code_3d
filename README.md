@@ -61,6 +61,9 @@ In the viewer: arrow keys fly, Page Up / Page Down (or E / Q) go up and down, Sh
 boosts, dragging looks around, Home returns to the start and `?` lists the controls.
 Flying into a sphere shows what is inside it; **V** (or the button) switches between the inside
 view and the window view, the breadcrumb flies back out, and the legend shows or hides link kinds.
+Tap (or **Enter** at the crosshair) selects a sphere and opens its info panel; **Esc**
+deselects. **L** shows or hides the labels, **/** (or Ctrl/Cmd+F) searches the whole map and
+flies to the result, and the map in the corner shows where you are and flies to what you tap.
 Phones and tablets get an on-screen trackball and move slider (Settings → Touch controls:
 automatic, always or never).
 

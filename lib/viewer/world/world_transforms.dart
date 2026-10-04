@@ -19,6 +19,13 @@ Map<String, Vector3> worldPositions(CodeMap map) {
   return positions;
 }
 
+/// [worldPositions] of [map], worked out once and shared (by the 3D world and
+/// the minimap).
+Map<String, Vector3> cachedWorldPositions(CodeMap map) =>
+    _positions[map] ??= worldPositions(map);
+
+final _positions = Expando<Map<String, Vector3>>('world positions');
+
 /// The radius of the smallest sphere around the origin that holds every
 /// top-level sphere of [map] (at least 1).
 double worldRadius(CodeMap map) {
