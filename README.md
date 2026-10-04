@@ -74,6 +74,31 @@ $ genhtml coverage/lcov.info -o coverage/
 $ open coverage/index.html
 ```
 
+### Golden tests (2D screenshots)
+
+Every screen is captured on phone (390×844), tablet (820×1180) and desktop
+(1440×900), in light and dark themes, with the real Roboto font
+(`goldenTest()` in `test/helpers/goldens.dart`). The images live in
+`goldens/` folders next to the tests and show what the UI looks like.
+
+```sh
+$ very_good test --tags golden                   # check
+$ very_good test --tags golden --update-goldens  # regenerate, then look at the images
+```
+
+### 3D visual tests
+
+`flutter test` has no GPU, so the 3D view is checked by
+`integration_test/visual`, which runs on Linux desktop under Xvfb with
+software rendering (needs `xvfb`, Mesa and the Linux desktop toolchain). Each
+scenario is captured at the same three sizes in both themes, checked for a
+sane render, and compared with `visual_baselines/`. From the hawkbee root:
+
+```sh
+$ tool/visual_test.sh            # compare; captures and diffs in build/visual/
+$ tool/visual_test.sh --update   # refresh the baselines, then look at them
+```
+
 ---
 
 ## Bloc Lints 🔍
