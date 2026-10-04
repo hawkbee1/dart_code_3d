@@ -122,6 +122,23 @@ void main() {
       expect(find.text('Changer de source'), findsOneWidget);
     });
 
+    testWidgets('announces the failure as a heading that appears', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pump(tester, const BuildFailure(BuildFailureKind.network, 'x'));
+
+      expect(
+        tester.getSemantics(find.text('No connection')),
+        matchesSemantics(
+          label: 'No connection',
+          isHeader: true,
+          isLiveRegion: true,
+        ),
+      );
+      handle.dispose();
+    });
+
     testWidgets('has big enough buttons', (tester) async {
       final handle = tester.ensureSemantics();
       await pump(
