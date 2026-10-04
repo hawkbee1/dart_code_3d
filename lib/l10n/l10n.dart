@@ -1,6 +1,7 @@
 import 'package:dart_code_3d/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
+export 'package:dart_code_3d/l10n/failure_texts.dart';
 export 'package:dart_code_3d/l10n/gen/app_localizations.dart';
 
 /// The delegates to give `MaterialApp.localizationsDelegates`.

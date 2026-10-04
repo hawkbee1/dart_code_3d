@@ -1,4 +1,3 @@
-import 'package:code_map_repository/code_map_repository.dart';
 import 'package:dart_code_3d/analysis/analysis.dart';
 import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/home/home.dart';
@@ -13,9 +12,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
-class _MockGoRouterState extends Mock implements GoRouterState;
+import '../../helpers/helpers.dart';
 
-class _MockCodeMapRepository extends Mock implements CodeMapRepository;
+class _MockGoRouterState extends Mock implements GoRouterState;
 
 void main() {
   group('routes', () {
@@ -34,7 +33,7 @@ void main() {
       await tester.pumpWidget(
         App(
           flavor: flavor,
-          codeMapRepository: _MockCodeMapRepository(),
+          codeMapRepository: repositoryWith(),
           settingsRepository: SettingsRepository(
             preferences: SharedPreferencesAsync(),
           ),
@@ -85,6 +84,29 @@ void main() {
 
       expect(page, isA<ViewerPage>());
       expect((page as ViewerPage).source, CodeMapSource.sample);
+    });
+
+    testWidgets('/viewer?id= opens a stored map', (tester) async {
+      await pump(tester);
+      final context = tester.element(find.byType(HomePage));
+      const route = ViewerRoute(id: '6-a');
+
+      final page = route.build(context, _MockGoRouterState()) as ViewerPage;
+
+      expect(page.source, const StoredCodeMapSource('6-a'));
+      expect(route.location, '/viewer?id=6-a');
+    });
+
+    testWidgets('/viewer?id= wins over ?file=', (tester) async {
+      await pump(tester, flavor: AppFlavor.development);
+      final context = tester.element(find.byType(HomePage));
+
+      final page = const ViewerRoute(
+        id: '6-a',
+        file: '/tmp/map.dc3d',
+      ).build(context, _MockGoRouterState()) as ViewerPage;
+
+      expect(page.source, const StoredCodeMapSource('6-a'));
     });
 
     testWidgets('/viewer?file= opens a local file in development', (

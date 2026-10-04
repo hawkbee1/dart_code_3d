@@ -32,10 +32,6 @@
     "@newAnalysisTitle": {
         "description": "Title of the new analysis page"
     },
-    "newAnalysisComingSoon": "Choosing a folder, a zip file or a git repository comes in the next version.",
-    "@newAnalysisComingSoon": {
-        "description": "Placeholder of the new analysis page"
-    },
     "settingsTitle": "Settings",
     "@settingsTitle": {
         "description": "Title of the settings page"
@@ -731,5 +727,415 @@
     "viewerTapSelect": "Tap a sphere: select it",
     "@viewerTapSelect": {
         "description": "Help: tap"
+    },
+    "viewerMapMissing": "This map is not stored any more",
+    "@viewerMapMissing": {
+        "description": "Title of the viewer failure screen when a stored map is gone"
+    },
+    "viewerMapMissingHint": "It was deleted, or the page was reloaded: in a browser, maps are kept in memory only.",
+    "@viewerMapMissingHint": {
+        "description": "Explains why a stored map is gone"
+    },
+    "analysisIntro": "Choose the Dart code to map.",
+    "@analysisIntro": {
+        "description": "New analysis: intro line"
+    },
+    "analysisSourceGit": "Git repository",
+    "@analysisSourceGit": {
+        "description": "Source kind: git repository"
+    },
+    "analysisSourceFolder": "Local folder",
+    "@analysisSourceFolder": {
+        "description": "Source kind: folder on this device"
+    },
+    "analysisSourceZip": "Zip file",
+    "@analysisSourceZip": {
+        "description": "Source kind: zip file"
+    },
+    "analysisGitUrlLabel": "Repository URL",
+    "@analysisGitUrlLabel": {
+        "description": "Label of the repository URL field"
+    },
+    "analysisGitUrlHint": "https://github.com/TalaoDAO/AltMe",
+    "@analysisGitUrlHint": {
+        "description": "Example in the repository URL field"
+    },
+    "analysisGitUrlError": "Not a GitHub or GitLab repository URL",
+    "@analysisGitUrlError": {
+        "description": "Error under the repository URL field"
+    },
+    "analysisGitRefLabel": "Branch or tag (optional)",
+    "@analysisGitRefLabel": {
+        "description": "Label of the branch field"
+    },
+    "analysisGitRefHint": "main",
+    "@analysisGitRefHint": {
+        "description": "Example in the branch field"
+    },
+    "analysisGitPublicOnly": "Public repositories only.",
+    "@analysisGitPublicOnly": {
+        "description": "Note under the repository fields"
+    },
+    "analysisFolderChoose": "Choose a folder…",
+    "@analysisFolderChoose": {
+        "description": "Button: pick a folder"
+    },
+    "analysisFolderChange": "Change folder…",
+    "@analysisFolderChange": {
+        "description": "Button: pick another folder"
+    },
+    "analysisFolderNone": "No folder chosen",
+    "@analysisFolderNone": {
+        "description": "Shown before a folder is chosen"
+    },
+    "analysisZipChoose": "Choose a zip file…",
+    "@analysisZipChoose": {
+        "description": "Button: pick a zip file"
+    },
+    "analysisZipChange": "Change file…",
+    "@analysisZipChange": {
+        "description": "Button: pick another zip file"
+    },
+    "analysisZipNone": "No file chosen",
+    "@analysisZipNone": {
+        "description": "Shown before a zip file is chosen"
+    },
+    "analysisNoGitTitle": "Git repositories are not available in a browser",
+    "@analysisNoGitTitle": {
+        "description": "Web: why the git option is hidden"
+    },
+    "analysisNoGitBody": "Browsers block downloads from GitHub. Download the repository as a zip file and choose it here.",
+    "@analysisNoGitBody": {
+        "description": "Web: what to do instead of a git repository"
+    },
+    "analysisAnalyze": "Analyze",
+    "@analysisAnalyze": {
+        "description": "Button: start the analysis"
+    },
+    "analysisRulesTitle": "Analysis rules",
+    "@analysisRulesTitle": {
+        "description": "Title of the rules summary"
+    },
+    "analysisRulesDefault": "Default rules",
+    "@analysisRulesDefault": {
+        "description": "Rules summary when nothing was changed"
+    },
+    "analysisRulesChanged": "{count, plural, =1{1 rule differs from the defaults} other{{count} rules differ from the defaults}}",
+    "@analysisRulesChanged": {
+        "description": "Rules summary when some rules were changed",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "analysisRulesEdit": "Edit rules",
+    "@analysisRulesEdit": {
+        "description": "Button: open the settings"
+    },
+    "analysisRuleChip": "{title}: {value}",
+    "@analysisRuleChip": {
+        "description": "A changed rule and its value",
+        "placeholders": {
+            "title": {
+                "type": "String"
+            },
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "ruleValueOn": "On",
+    "@ruleValueOn": {
+        "description": "Value of an enabled rule"
+    },
+    "ruleValueOff": "Off",
+    "@ruleValueOff": {
+        "description": "Value of a disabled rule"
+    },
+    "ruleValueNone": "None",
+    "@ruleValueNone": {
+        "description": "Value of a rule with an empty selection"
+    },
+    "ruleValuePatterns": "{count, plural, =1{1 pattern} other{{count} patterns}}",
+    "@ruleValuePatterns": {
+        "description": "Value of a rule that lists patterns",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "analysisProgressTitle": "Analyzing {name}",
+    "@analysisProgressTitle": {
+        "description": "Title of the progress screen",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "analysisStageFetching": "Getting the code",
+    "@analysisStageFetching": {
+        "description": "Progress stage 1"
+    },
+    "analysisStageAnalyzing": "Analyzing the code",
+    "@analysisStageAnalyzing": {
+        "description": "Progress stage 2"
+    },
+    "analysisStageLayingOut": "Laying out the spheres",
+    "@analysisStageLayingOut": {
+        "description": "Progress stage 3"
+    },
+    "analysisStageSaving": "Saving the map",
+    "@analysisStageSaving": {
+        "description": "Progress stage 4"
+    },
+    "analysisLayingOutHint": "Big projects take a few seconds to place.",
+    "@analysisLayingOutHint": {
+        "description": "Reassurance while the layout runs"
+    },
+    "analysisElapsed": "Elapsed: {time}",
+    "@analysisElapsed": {
+        "description": "Elapsed time of the analysis",
+        "placeholders": {
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "analysisProgressSemantics": "{percent}%",
+    "@analysisProgressSemantics": {
+        "description": "Semantics value of the progress bar",
+        "placeholders": {
+            "percent": {
+                "type": "int"
+            }
+        }
+    },
+    "analysisCancel": "Cancel",
+    "@analysisCancel": {
+        "description": "Button: cancel the analysis"
+    },
+    "analysisCancelTitle": "Cancel the analysis?",
+    "@analysisCancelTitle": {
+        "description": "Title of the cancel confirmation"
+    },
+    "analysisCancelBody": "Nothing will be saved.",
+    "@analysisCancelBody": {
+        "description": "Body of the cancel confirmation"
+    },
+    "analysisCancelKeep": "Keep going",
+    "@analysisCancelKeep": {
+        "description": "Cancel confirmation: keep analyzing"
+    },
+    "analysisCancelConfirm": "Cancel analysis",
+    "@analysisCancelConfirm": {
+        "description": "Cancel confirmation: cancel"
+    },
+    "analysisRetry": "Try again",
+    "@analysisRetry": {
+        "description": "Failure: try the analysis again"
+    },
+    "analysisChangeSource": "Change source",
+    "@analysisChangeSource": {
+        "description": "Failure: back to the form"
+    },
+    "analysisFailureDetails": "Technical details",
+    "@analysisFailureDetails": {
+        "description": "Failure: expandable error details"
+    },
+    "failureSourceNotFoundTitle": "Folder not found",
+    "@failureSourceNotFoundTitle": {
+        "description": "Failure title"
+    },
+    "failureSourceNotFoundBody": "The folder no longer exists or cannot be read.",
+    "@failureSourceNotFoundBody": {
+        "description": "Failure message"
+    },
+    "failureInvalidGitUrlTitle": "Not a repository URL",
+    "@failureInvalidGitUrlTitle": {
+        "description": "Failure title"
+    },
+    "failureInvalidGitUrlBody": "Use the URL of a GitHub or GitLab repository.",
+    "@failureInvalidGitUrlBody": {
+        "description": "Failure message"
+    },
+    "failurePrivateOrMissingRepoTitle": "Repository not found",
+    "@failurePrivateOrMissingRepoTitle": {
+        "description": "Failure title"
+    },
+    "failurePrivateOrMissingRepoBody": "It does not exist, or it is private. Private repositories are not supported yet.",
+    "@failurePrivateOrMissingRepoBody": {
+        "description": "Failure message"
+    },
+    "failureRateLimitedTitle": "Too many downloads",
+    "@failureRateLimitedTitle": {
+        "description": "Failure title"
+    },
+    "failureRateLimitedBody": "The host refuses more downloads for now. Try again later.",
+    "@failureRateLimitedBody": {
+        "description": "Failure message"
+    },
+    "failureNetworkTitle": "No connection",
+    "@failureNetworkTitle": {
+        "description": "Failure title"
+    },
+    "failureNetworkBody": "The download failed. Check your connection and try again.",
+    "@failureNetworkBody": {
+        "description": "Failure message"
+    },
+    "failureInvalidArchiveTitle": "Not a usable archive",
+    "@failureInvalidArchiveTitle": {
+        "description": "Failure title"
+    },
+    "failureInvalidArchiveBody": "The zip file is damaged, or too large.",
+    "@failureInvalidArchiveBody": {
+        "description": "Failure message"
+    },
+    "failureUnsupportedOnWebTitle": "Not available in a browser",
+    "@failureUnsupportedOnWebTitle": {
+        "description": "Failure title"
+    },
+    "failureUnsupportedOnWebBody": "Browsers block this download. Use a zip file instead.",
+    "@failureUnsupportedOnWebBody": {
+        "description": "Failure message"
+    },
+    "failureInvalidFileTitle": "Not a code map",
+    "@failureInvalidFileTitle": {
+        "description": "Failure title"
+    },
+    "failureInvalidFileBody": "The file is not a code map, or a newer version of the app made it. Update the app and try again.",
+    "@failureInvalidFileBody": {
+        "description": "Failure message"
+    },
+    "failureAnalysisErrorTitle": "The analysis failed",
+    "@failureAnalysisErrorTitle": {
+        "description": "Failure title"
+    },
+    "failureAnalysisErrorBody": "Something went wrong while analyzing this code. The technical details help to report it.",
+    "@failureAnalysisErrorBody": {
+        "description": "Failure message"
+    },
+    "failureStorageTitle": "The map could not be stored",
+    "@failureStorageTitle": {
+        "description": "Failure title"
+    },
+    "failureStorageBody": "Check the free space on this device and try again.",
+    "@failureStorageBody": {
+        "description": "Failure message"
+    },
+    "failureCancelledTitle": "Cancelled",
+    "@failureCancelledTitle": {
+        "description": "Failure title"
+    },
+    "failureCancelledBody": "The analysis was cancelled.",
+    "@failureCancelledBody": {
+        "description": "Failure message"
+    },
+    "homeRecentTitle": "Recent maps",
+    "@homeRecentTitle": {
+        "description": "Home: title of the list of stored maps"
+    },
+    "homeMapActions": "Actions for {name}",
+    "@homeMapActions": {
+        "description": "Tooltip of the menu of a recent map",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "homeMapOpen": "Open",
+    "@homeMapOpen": {
+        "description": "Recent map menu: open"
+    },
+    "homeMapShare": "Share",
+    "@homeMapShare": {
+        "description": "Recent map menu: share (phones)"
+    },
+    "homeMapExport": "Export",
+    "@homeMapExport": {
+        "description": "Recent map menu: save or download (desktop, web)"
+    },
+    "homeMapDelete": "Delete",
+    "@homeMapDelete": {
+        "description": "Recent map menu: delete"
+    },
+    "homeMapDeleted": "Deleted {name}",
+    "@homeMapDeleted": {
+        "description": "Snackbar after deleting a map",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "homeUndo": "Undo",
+    "@homeUndo": {
+        "description": "Snackbar action: undo the deletion"
+    },
+    "homeSourceFolder": "Folder · {name}",
+    "@homeSourceFolder": {
+        "description": "Source line of a map made from a folder",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "homeSourceZip": "Zip · {name}",
+    "@homeSourceZip": {
+        "description": "Source line of a map made from a zip file",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "homeMapMeta": "{spheres} spheres · {date}",
+    "@homeMapMeta": {
+        "description": "Size and date of a recent map",
+        "placeholders": {
+            "spheres": {
+                "type": "String"
+            },
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "homeWebNotice": "In a browser, maps are kept in memory and are lost when you reload the page. Export a map to keep it.",
+    "@homeWebNotice": {
+        "description": "Web: maps are not stored"
+    },
+    "homeLoadFailed": "The recent maps could not be read.",
+    "@homeLoadFailed": {
+        "description": "Home: the list failed to load"
+    },
+    "homeOpenFailed": "Could not open the file. {reason}",
+    "@homeOpenFailed": {
+        "description": "Snackbar when the picked file is not a code map",
+        "placeholders": {
+            "reason": {
+                "type": "String"
+            }
+        }
+    },
+    "homeExportFailed": "Could not export the map.",
+    "@homeExportFailed": {
+        "description": "Snackbar when sharing or saving failed"
+    },
+    "analysisSourceGitShort": "Git",
+    "@analysisSourceGitShort": {
+        "description": "Short source kind on narrow screens: git repository"
+    },
+    "analysisSourceFolderShort": "Folder",
+    "@analysisSourceFolderShort": {
+        "description": "Short source kind on narrow screens: folder"
+    },
+    "analysisSourceZipShort": "Zip",
+    "@analysisSourceZipShort": {
+        "description": "Short source kind on narrow screens: zip file"
     }
 }

@@ -75,6 +75,46 @@ void main() {
       );
 
       blocTest<ViewerBloc, ViewerState>(
+        'opens a stored map',
+        setUp: () =>
+            when(() => repository.load('6-a'))
+                .thenAnswer((_) async => codeMapFileOf(id: '6-a')),
+        build: build,
+        act: (bloc) => bloc.add(const ViewerOpened(StoredCodeMapSource('6-a'))),
+        expect: () => [ViewerReady(map: map)],
+        verify: (_) {
+          verify(() => repository.load('6-a')).called(1);
+          verify(() => repository.openBytes(codeMapFileOf(id: '6-a').bytes))
+              .called(1);
+        },
+      );
+
+      blocTest<ViewerBloc, ViewerState>(
+        'fails on a stored map that is gone',
+        setUp: () =>
+            when(() => repository.load(any())).thenAnswer((_) async => null),
+        build: build,
+        act: (bloc) => bloc.add(const ViewerOpened(StoredCodeMapSource('6-a'))),
+        expect: () => [
+          const ViewerFailure('', kind: ViewerFailureKind.missing),
+        ],
+        verify: (_) => verifyNever(() => repository.openBytes(any())),
+      );
+
+      blocTest<ViewerBloc, ViewerState>(
+        'fails on a store that cannot be read',
+        setUp: () => when(() => repository.load(any())).thenThrow(
+          const BuildFailure(
+            BuildFailureKind.storage,
+            'The map could not be read.',
+          ),
+        ),
+        build: build,
+        act: (bloc) => bloc.add(const ViewerOpened(StoredCodeMapSource('6-a'))),
+        expect: () => [const ViewerFailure('The map could not be read.')],
+      );
+
+      blocTest<ViewerBloc, ViewerState>(
         'reloads when opened again',
         build: build,
         seed: () => ViewerReady(map: map),
@@ -272,7 +312,14 @@ void main() {
         expect(event.props, isA<List<Object?>>());
       }
       expect(const ViewerLoading().props, isEmpty);
-      expect(const ViewerFailure('x').props, ['x']);
+      expect(const ViewerFailure('x').props, [
+        'x',
+        ViewerFailureKind.unreadable,
+      ]);
+      expect(
+        const ViewerFailure('x'),
+        isNot(const ViewerFailure('x', kind: ViewerFailureKind.missing)),
+      );
       expect(ViewerReady(map: map).props, hasLength(7));
     });
   });
