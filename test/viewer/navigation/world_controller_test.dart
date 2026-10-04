@@ -56,6 +56,96 @@ void main() {
       expect(navigator.container, 'A');
     });
 
+    test('flies to a node, following the containment', () {
+      controller.flyToNode('A.B.n', animate: false);
+
+      expect(navigator.container, 'A.B');
+      // Facing the node: the camera looks straight at its center.
+      final toNode = (world.positions['A.B.n']! - navigator.position)
+        ..normalize();
+      expect(navigator.forward.distanceTo(toNode), lessThan(1e-4));
+    });
+
+    test('animates the flight to a node when allowed', () {
+      controller.flyToNode('C.k', animate: true);
+
+      expect(navigator.isFlying, isTrue);
+      for (var i = 0; i < 90; i++) {
+        navigator.step(1 / 30);
+      }
+      expect(navigator.isFlying, isFalse);
+      expect(navigator.container, 'C');
+    });
+
+    test('does not fly to a node without a navigator', () {
+      controller
+        ..detach(navigator)
+        ..flyToNode('C', animate: false);
+
+      expect(navigator.container, isNull);
+    });
+
+    test('exposes the navigator it controls', () {
+      expect(controller.navigator, same(navigator));
+
+      controller.detach(navigator);
+
+      expect(controller.navigator, isNull);
+    });
+
+    test('tells its listeners when the camera moves', () {
+      var notified = 0;
+      controller.addListener(() => notified++);
+
+      navigator.input.forward = true;
+      navigator.step(1 / 30);
+
+      expect(notified, 1);
+    });
+
+    test(
+      'tells its listeners, once the view is built, that it is attached',
+      () async {
+        var notified = 0;
+        final fresh = WorldController()
+          ..addListener(() => notified++)
+          ..attach(navigator);
+        expect(notified, 0);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(notified, 1);
+        fresh.dispose();
+      },
+    );
+
+    test('stops following a navigator that was replaced', () {
+      final other = FlyNavigator(world: world);
+      var notified = 0;
+      controller
+        ..addListener(() => notified++)
+        ..attach(other);
+      navigator
+        ..input.forward = true
+        ..step(1 / 30);
+
+      expect(notified, 0);
+      expect(controller.navigator, same(other));
+    });
+
+    test('stops following when disposed, even before it was told', () async {
+      final fresh = WorldController()..attach(navigator);
+      var notified = 0;
+      fresh
+        ..addListener(() => notified++)
+        ..dispose();
+
+      navigator.input.forward = true;
+      navigator.step(1 / 30);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(notified, 0);
+    });
+
     test('exposes the pose it flew to', () {
       controller.flyToContainer('A', animate: false);
 

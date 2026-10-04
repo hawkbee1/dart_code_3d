@@ -356,6 +356,185 @@ void main() {
       });
     });
 
+    group('flights along several poses', () {
+      late CodeWorld nested;
+
+      setUp(() => nested = CodeWorld(nestedMap(), CodeWorldColors.light));
+
+      FlyNavigator startingAt(Vector3 position, {List<String?>? changes}) =>
+          FlyNavigator(
+            world: nested,
+            start: CameraPose(position: position, target: Vector3.zero()),
+            onContainerChanged: changes?.add,
+          );
+
+      CameraPose landing(String? container) => exitPose(
+        world: nested,
+        target: container,
+        from: Vector3(40, 0, 0),
+        current: null,
+      );
+
+      test('report the container at each pose they pass, in order', () {
+        final changes = <String?>[];
+        final navigator = startingAt(Vector3(40, 0, 0), changes: changes)
+          ..flyAlong([landing('A'), landing('A.B')]);
+
+        _fly(navigator, 2);
+
+        expect(changes, ['A', 'A.B']);
+        expect(navigator.isFlying, isFalse);
+        expect(navigator.container, 'A.B');
+      });
+
+      test('do not report the spheres crossed between two poses', () {
+        final changes = <String?>[];
+        // Straight along X, through C and then through A.
+        final navigator = startingAt(Vector3(40, 0, 0), changes: changes)
+          ..flyAlong([
+            CameraPose(
+              position: Vector3(-10, 0, 0),
+              target: Vector3(-20, 0, 0),
+            ),
+          ]);
+
+        _fly(navigator, 2);
+
+        expect(changes, isEmpty);
+        expect(navigator.container, isNull);
+        expect(navigator.position.x, closeTo(-10, 1e-3));
+      });
+
+      test('report every pose reached in a single long step', () {
+        final changes = <String?>[];
+        final navigator = startingAt(Vector3(40, 0, 0), changes: changes)
+          ..flyAlong([landing('A'), landing('A.B')])
+          ..step(10);
+
+        expect(changes, ['A', 'A.B']);
+        expect(navigator.isFlying, isFalse);
+      });
+
+      test('jump to the last pose without animation', () {
+        final changes = <String?>[];
+        final navigator = startingAt(Vector3(40, 0, 0), changes: changes)
+          ..flyAlong([landing('A'), landing('A.B')], animate: false);
+
+        expect(navigator.isFlying, isFalse);
+        expect(navigator.container, 'A.B');
+        expect(changes, ['A.B']);
+      });
+
+      test('take 0.6 s for a hop and 1.5 s across the world', () {
+        final hop = startingAt(Vector3(40, 0, 0))
+          ..flyAlong([
+            CameraPose(position: Vector3(39, 0, 0), target: Vector3.zero()),
+          ]);
+        final across = startingAt(Vector3(40, 0, 0))
+          ..flyAlong([
+            CameraPose(position: Vector3(-40, 0, 0), target: Vector3.zero()),
+          ]);
+
+        _fly(hop, 0.7);
+        _fly(across, 1.4);
+
+        expect(hop.isFlying, isFalse);
+        expect(across.isFlying, isTrue);
+        _fly(across, 0.2);
+        expect(across.isFlying, isFalse);
+      });
+
+      test('complete, turning, even when they go nowhere', () {
+        final navigator = startingAt(Vector3(40, 0, 0))
+          ..flyAlong([
+            CameraPose(
+              position: Vector3(40, 0, 0),
+              target: Vector3(40, 0, -10),
+            ),
+          ]);
+
+        _fly(navigator, 1);
+
+        expect(navigator.isFlying, isFalse);
+        expect(navigator.forward.z, closeTo(-1, 1e-3));
+      });
+    });
+
+    group('notifications', () {
+      late int notified;
+      late FlyNavigator navigator;
+
+      setUp(() {
+        notified = 0;
+        navigator = lookingWest()..addListener(() => notified++);
+      });
+
+      test('come when the camera moves', () {
+        navigator.input.forward = true;
+
+        navigator
+          ..step(_dt)
+          ..step(_dt);
+
+        expect(notified, 2);
+      });
+
+      test('come when the camera turns', () {
+        navigator
+          ..look(const Offset(50, 0))
+          ..step(_dt);
+
+        expect(notified, 1);
+      });
+
+      test('do not come when nothing changes', () {
+        navigator.step(_dt);
+        final first = notified;
+
+        navigator
+          ..step(_dt)
+          ..step(_dt);
+
+        expect(notified, first);
+      });
+
+      test('come when the camera jumps or goes back to the start', () {
+        navigator.step(_dt);
+        final before = notified;
+
+        navigator.flyTo(
+          CameraPose(position: Vector3(20, 5, 0), target: Vector3(0, 5, 0)),
+          animate: false,
+        );
+        expect(notified, before + 1);
+
+        navigator.reset();
+        expect(notified, before + 2);
+      });
+
+      test('come during a flight', () {
+        navigator.flyTo(
+          CameraPose(position: Vector3(30, 5, 20), target: Vector3(30, 5, 0)),
+        );
+
+        _fly(navigator, 0.5);
+
+        expect(notified, greaterThan(5));
+      });
+    });
+
+    test('gives a view camera for the current pose', () {
+      final navigator = lookingWest();
+      const size = Size(390, 844);
+
+      final camera = navigator.viewCamera(size);
+
+      expect(camera.position, navigator.position);
+      expect(camera.forward.distanceTo(navigator.forward), lessThan(1e-6));
+      expect(camera.fovY, world.fovYFor(size));
+      expect(camera.size, size);
+    });
+
     test('NavigationInput.active tells when something is held', () {
       expect((NavigationInput()..forward = true).active, isTrue);
       expect((NavigationInput()..back = true).active, isTrue);

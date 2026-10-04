@@ -129,6 +129,18 @@ CodeMap nestedMap() {
   );
 }
 
+/// Nothing but an external package.
+CodeMap onlyPackageMap() {
+  final map = worldMap(entryNodeId: null);
+  return CodeMap(
+    graph: CodeGraph(
+      project: map.graph.project,
+      nodes: {'pkg': map.graph.nodes['pkg']!},
+    ),
+    placements: {'pkg': map.placements['pkg']!},
+  );
+}
+
 /// [worldMap] without any link.
 CodeMap mapWithoutLinks() {
   final map = worldMap();

@@ -6,6 +6,7 @@ import 'package:dart_code_3d/viewer/viewer.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:settings_repository/settings_repository.dart';
 
 import '../../helpers/code_maps.dart';
 import '../../helpers/helpers.dart';
@@ -213,6 +214,163 @@ void main() {
         expect(after, isNot(same(before)));
         expect(controller.detached, [before]);
         expect(controller.attached, [before, after]);
+      });
+    });
+
+    group('selecting', () {
+      late CodeMap map;
+      late List<String?> selections;
+      const view = Size(800, 600);
+
+      setUp(() {
+        map = worldMap();
+        selections = [];
+      });
+
+      Future<void> pumpSelecting(
+        WidgetTester tester, {
+        String? selectedId,
+        bool labelsOn = true,
+        VoidCallback? onToggleLabels,
+        VoidCallback? onSearch,
+      }) async {
+        await tester.pumpApp(
+          CodeWorldView(
+            map: map,
+            initialize: () async {},
+            sceneBuilder: scene,
+            selectedId: selectedId,
+            labelsOn: labelsOn,
+            onSelect: selections.add,
+            onToggleLabels: onToggleLabels,
+            onSearch: onSearch,
+          ),
+        );
+        await tester.pump();
+      }
+
+      Offset on(String id) =>
+          built.last.$2.viewCamera(view).project(built.last.$1.positions[id]!)!;
+
+      testWidgets('selects the sphere that is tapped', (tester) async {
+        await pumpSelecting(tester);
+
+        await tester.tapAt(on('main'));
+        await tester.tapAt(on('A'));
+
+        expect(selections, ['main', 'A']);
+      });
+
+      testWidgets('deselects on a tap in empty space', (tester) async {
+        await pumpSelecting(tester);
+
+        await tester.tapAt(const Offset(10, 10));
+
+        expect(selections, [null]);
+      });
+
+      testWidgets('Enter selects what is under the crosshair', (tester) async {
+        await pumpSelecting(tester);
+
+        // The camera starts out looking at main().
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.enter);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.enter);
+
+        expect(selections, ['main']);
+      });
+
+      testWidgets('Enter selects nothing when nothing is in the middle', (
+        tester,
+      ) async {
+        await pumpSelecting(tester);
+        built.last.$2
+          ..look(const Offset(300, 0))
+          ..step(1 / 30);
+        await tester.pump();
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.enter);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.enter);
+
+        expect(selections, isEmpty);
+      });
+
+      testWidgets('Esc deselects', (tester) async {
+        await pumpSelecting(tester, selectedId: 'A');
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.escape);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.escape);
+
+        expect(selections, [null]);
+      });
+
+      testWidgets('highlights the selected node in the world', (tester) async {
+        await pumpSelecting(tester, selectedId: 'A');
+
+        expect(built.last.$1.selectedId, 'A');
+        expect(built.last.$1.highlighted!.nodeId, 'A');
+      });
+
+      testWidgets('keeps the selection when the theme changes', (tester) async {
+        await pumpSelecting(tester, selectedId: 'A');
+        await tester.pumpApp(
+          CodeWorldView(
+            map: map,
+            initialize: () async {},
+            sceneBuilder: scene,
+            selectedId: 'A',
+          ),
+          themeMode: ThemeMode.dark,
+        );
+        // The theme (and its extensions) animate to the new one.
+        await tester.pumpAndSettle();
+
+        expect(built.last.$1.colors, CodeWorldColors.dark);
+        expect(built.last.$1.selectedId, 'A');
+      });
+
+      testWidgets('draws the labels and the crosshair, or only the crosshair', (
+        tester,
+      ) async {
+        await pumpSelecting(tester);
+        expect(find.byType(LabelsLayer), findsOneWidget);
+        expect(find.byType(Crosshair), findsOneWidget);
+
+        await pumpSelecting(tester, labelsOn: false);
+        expect(find.byType(LabelsLayer), findsNothing);
+        expect(find.byType(Crosshair), findsOneWidget);
+      });
+
+      testWidgets('forwards the L key and the search keys', (tester) async {
+        var labels = 0;
+        var searches = 0;
+        await pumpSelecting(
+          tester,
+          onToggleLabels: () => labels++,
+          onSearch: () => searches++,
+        );
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.keyL);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.keyL);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.slash, character: '/');
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.slash);
+
+        expect(labels, 1);
+        expect(searches, 1);
+      });
+
+      testWidgets('can hide the touch controls', (tester) async {
+        await tester.pumpApp(
+          CodeWorldView(
+            map: map,
+            initialize: () async {},
+            sceneBuilder: scene,
+            touchControls: TouchControlsMode.always,
+            hideTouchControls: true,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(Trackball), findsNothing);
       });
     });
 

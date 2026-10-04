@@ -106,6 +106,103 @@ void main() {
       });
     });
 
+    group('selection', () {
+      late CodeWorld world;
+      late VisibilityIndex index;
+
+      setUp(() {
+        world = CodeWorld(nestedMap(), CodeWorldColors.light);
+        index = VisibilityIndex.of(world.map);
+      });
+
+      void showContainer(String? container) => world.show(
+        resolveVisibility(
+          index: index,
+          containerId: container,
+          mode: ViewMode.interior,
+          linkKinds: {...LinkKind.values},
+        ),
+        ViewMode.interior,
+      );
+
+      test('lists the spheres a click can hit', () {
+        final pickables = world.pickables.toList();
+
+        expect(pickables.map((p) => p.id), ['main', 'A', 'C', 'G', 'pkg']);
+        final a = pickables.singleWhere((p) => p.id == 'A');
+        expect(a.center, Vector3.zero());
+        expect(a.radius, 3);
+      });
+
+      test('lists what is inside the container the camera is in', () {
+        showContainer('A');
+
+        expect(world.pickables.map((p) => p.id), ['A.m', 'A.B']);
+      });
+
+      test('highlights the selected sphere', () {
+        world.select('A');
+
+        expect(world.selectedId, 'A');
+        expect(world.highlighted!.nodeId, 'A');
+        expect(world.highlighted!.radius, 3);
+      });
+
+      test('highlights nothing without a selection', () {
+        expect(world.selectedId, isNull);
+        expect(world.highlighted, isNull);
+
+        world
+          ..select('A')
+          ..select(null);
+
+        expect(world.highlighted, isNull);
+      });
+
+      test('highlights the sphere that holds a hidden selection', () {
+        world.select('A.B.n');
+
+        expect(world.selectedId, 'A.B.n');
+        expect(world.highlighted!.nodeId, 'A');
+      });
+
+      test('follows the selection down as spheres are entered', () {
+        world.select('A.B.n');
+
+        showContainer('A');
+        expect(world.highlighted!.nodeId, 'A.B');
+
+        showContainer('A.B');
+        expect(world.highlighted!.nodeId, 'A.B.n');
+      });
+
+      test('highlights nothing that is not drawn', () {
+        showContainer('A');
+
+        world.select('C.k');
+
+        expect(world.highlighted, isNull);
+        expect(world.selectedId, 'C.k');
+      });
+
+      test('selecting the same node again changes nothing', () {
+        world.select('C');
+        final highlighted = world.highlighted;
+
+        world.select('C');
+
+        expect(world.highlighted, same(highlighted));
+      });
+    });
+
+    test('has the field of view of a view of a given size', () {
+      final world = CodeWorld(worldMap(), CodeWorldColors.light);
+
+      expect(world.fovYFor(const Size(1600, 900)), defaultFovY);
+      expect(world.fovYFor(const Size(390, 844)), fovYForAspect(390 / 844));
+      expect(world.fovYFor(const Size(100, 0)), fovYForAspect(1));
+    });
+
     group('camera', () {
       test('starts at the start pose, holding the whole world', () {
         final world = CodeWorld(worldMap(), CodeWorldColors.light);
