@@ -1,3 +1,4 @@
+import 'package:code_graph/code_graph.dart';
 import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/viewer/viewer.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +29,81 @@ void main() {
         world.startPose.target,
         world.positions[map.graph.project.entryNodeId],
       );
+    });
+
+    group('show', () {
+      late CodeWorld world;
+      late VisibilityIndex index;
+
+      setUp(() {
+        world = CodeWorld(nestedMap(), CodeWorldColors.light);
+        index = VisibilityIndex.of(world.map);
+      });
+
+      VisibleWorld resolve(String? container, [ViewMode? mode]) =>
+          resolveVisibility(
+            index: index,
+            containerId: container,
+            mode: mode ?? ViewMode.interior,
+            linkKinds: {...LinkKind.values},
+          );
+
+      test('starts on the top level with every link kind', () {
+        expect(world.instanceCount, 5);
+        expect(world.linkCount, 6);
+        expect(world.containerId, isNull);
+        expect(world.content.shells, isEmpty);
+      });
+
+      test('draws what is inside the container the camera is in', () {
+        world.show(resolve('A'), ViewMode.interior);
+
+        expect(world.containerId, 'A');
+        expect(world.instanceCount, 2);
+        expect(world.linkCount, 1);
+        expect(world.content.shells.single.sphere.nodeId, 'A');
+      });
+
+      test('draws the rest of the world too in window view', () {
+        world.show(resolve('A', ViewMode.window), ViewMode.window);
+
+        expect(world.instanceCount, 6);
+        expect(world.content.shells.single.opacity, windowShellOpacity);
+      });
+
+      test('bounds link widths by the level it shows', () {
+        expect(world.content.linkScale, world.radius);
+
+        world.show(resolve('A'), ViewMode.interior);
+
+        // Class A is 3 across: much smaller than the world.
+        expect(world.content.linkScale, 3);
+        expect(world.radius, greaterThan(20));
+      });
+
+      test('keeps its content when shown the same thing again', () {
+        world.show(resolve('A'), ViewMode.interior);
+        final content = world.content;
+
+        world.show(resolve('A'), ViewMode.interior);
+        expect(world.content, same(content));
+
+        // The same visible world and mode, built again: no rebuild either.
+        final again = resolve('A');
+        world.show(again, ViewMode.interior);
+        expect(world.content, same(content));
+      });
+
+      test('rebuilds when only the mode changes', () {
+        final visible = resolve('A');
+        world.show(visible, ViewMode.interior);
+        final content = world.content;
+
+        world.show(visible, ViewMode.window);
+
+        expect(world.content, isNot(same(content)));
+        expect(world.content.shells.single.opacity, windowShellOpacity);
+      });
     });
 
     group('camera', () {

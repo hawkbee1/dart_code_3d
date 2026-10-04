@@ -56,6 +56,46 @@ void main() {
           viewerViewWith(viewerBlocWith(ViewerReady(map: sampleMap()))),
     );
 
+    // The camera is inside WeatherCache, which has a nested subclass.
+    ViewerReady inside(ViewMode mode) {
+      final map = sampleMap();
+      return ViewerReady(
+        map: map,
+        currentContainerId: map.graph.nodes.values
+            .firstWhere((n) => n.name == 'WeatherCache')
+            .id,
+        viewMode: mode,
+      );
+    }
+
+    goldenTest(
+      'shows the path, the legend and the view toggle inside a sphere',
+      fileName: 'viewer_inside_interior',
+      locales: const [Locale('en'), Locale('fr')],
+      devices: const [GoldenDevice.phone],
+      builder: () => viewerViewWith(
+        viewerBlocWith(inside(ViewMode.interior)),
+        touchControls: TouchControlsMode.always,
+      ),
+    );
+
+    goldenTest(
+      'shows the window view toggle inside a sphere',
+      fileName: 'viewer_inside_window',
+      builder: () => viewerViewWith(viewerBlocWith(inside(ViewMode.window))),
+    );
+
+    goldenTest(
+      'cuts the very long names of a deep path',
+      fileName: 'viewer_long_names',
+      locales: const [Locale('en'), Locale('fr')],
+      builder: () => viewerViewWith(
+        viewerBlocWith(
+          ViewerReady(map: longNamesMap(), currentContainerId: 'A.B.C'),
+        ),
+      ),
+    );
+
     goldenTest(
       'lists the flying controls',
       fileName: 'viewer_controls_help',

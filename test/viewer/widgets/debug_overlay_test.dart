@@ -28,6 +28,7 @@ void main() {
 
     Widget overlay() => DebugOverlay(
       instanceCount: 42,
+      linkCount: 7,
       addTimingsCallback: added.add,
       removeTimingsCallback: removed.add,
     );
@@ -37,7 +38,7 @@ void main() {
     ) async {
       await tester.pumpApp(overlay());
       expect(find.textContaining('waiting for frames'), findsOneWidget);
-      expect(find.textContaining('42 spheres'), findsOneWidget);
+      expect(find.textContaining('42 spheres · 7 links'), findsOneWidget);
 
       // 61 frames 1/60 s apart: 60 fps.
       added.single([for (var i = 0; i <= 60; i++) _frame(i * 16667)]);
@@ -89,7 +90,7 @@ void main() {
     });
 
     testWidgets('uses the scheduler by default', (tester) async {
-      await tester.pumpApp(const DebugOverlay(instanceCount: 1));
+      await tester.pumpApp(const DebugOverlay(instanceCount: 1, linkCount: 0));
       await tester.pumpApp(const SizedBox());
 
       expect(tester.takeException(), isNull);

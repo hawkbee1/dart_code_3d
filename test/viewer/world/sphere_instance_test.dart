@@ -1,45 +1,9 @@
-import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/viewer/viewer.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart' show Color;
 import 'package:vector_math/vector_math.dart';
 
-import '../../helpers/code_maps.dart';
-
 void main() {
-  group('sphereInstances', () {
-    test('draws the top level, colored by kind', () {
-      final map = worldMap();
-
-      final instances = sphereInstances(
-        map,
-        worldPositions(map),
-        CodeWorldColors.light,
-      );
-
-      expect(instances.map((i) => i.nodeId), ['main', 'A', 'pkg']);
-      expect(instances[1].radius, 2);
-      expect(
-        instances[1].color,
-        linearColor(CodeWorldColors.light.nodes[map.graph.nodes['A']!.kind]!),
-      );
-    });
-
-    test('draws the children of a container', () {
-      final map = worldMap();
-
-      final instances = sphereInstances(
-        map,
-        worldPositions(map),
-        CodeWorldColors.dark,
-        containerId: 'A',
-      );
-
-      expect(instances.single.nodeId, 'A.m');
-      expect(instances.single.center, Vector3(5, 0, 0));
-    });
-  });
-
   group(SphereInstance, () {
     test('scales a unit sphere to its radius at its center', () {
       final instance = SphereInstance(

@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:vector_math/vector_math.dart' show Vector3;
 
 import '../../helpers/code_maps.dart';
 import '../../helpers/helpers.dart';
@@ -158,6 +159,136 @@ void main() {
       }
 
       verify(() => bloc.add(const ViewerContainerChanged('main'))).called(1);
+    });
+
+    group('inside a sphere', () {
+      late MockViewerBloc bloc;
+      late FlyNavigator navigator;
+      late CodeWorld world;
+
+      Widget view(ViewerReady state) {
+        bloc = viewerBlocWith(state);
+        return viewerViewWith(
+          bloc,
+          sceneBuilder: (context, codeWorld, flyNavigator) {
+            world = codeWorld;
+            navigator = flyNavigator;
+            return const SizedBox.expand();
+          },
+        );
+      }
+
+      testWidgets('draws what the visible world holds', (tester) async {
+        final state = ViewerReady(
+          map: nestedMap(),
+          currentContainerId: 'A',
+          viewMode: ViewMode.window,
+        );
+        await tester.pumpApp(view(state));
+        await tester.pump();
+
+        expect(world.containerId, 'A');
+        expect(world.instanceCount, state.visible.visibleSpheres.length);
+        expect(world.content.shells.single.opacity, windowShellOpacity);
+      });
+
+      testWidgets('shows the path, the view toggle and the legend', (
+        tester,
+      ) async {
+        await tester.pumpApp(
+          view(ViewerReady(map: nestedMap(), currentContainerId: 'A')),
+        );
+        await tester.pump();
+
+        expect(find.text('World'), findsOneWidget);
+        expect(find.text('A'), findsOneWidget);
+        expect(find.text('Inside'), findsOneWidget);
+        expect(find.text('Calls'), findsOneWidget);
+      });
+
+      testWidgets('the toggle and the V key switch the view mode', (
+        tester,
+      ) async {
+        await tester.pumpApp(
+          view(ViewerReady(map: nestedMap(), currentContainerId: 'A')),
+        );
+        await tester.pump();
+
+        await tester.tap(find.text('Inside'));
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.keyV);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.keyV);
+
+        verify(() => bloc.add(const ViewerViewModeToggled())).called(2);
+      });
+
+      testWidgets('the V key does nothing at the world', (tester) async {
+        await tester.pumpApp(view(ViewerReady(map: nestedMap())));
+        await tester.pump();
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.keyV);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.keyV);
+
+        verifyNever(() => bloc.add(const ViewerViewModeToggled()));
+      });
+
+      testWidgets('legend chips show and hide link kinds', (tester) async {
+        await tester.pumpApp(view(ViewerReady(map: nestedMap())));
+        await tester.pump();
+
+        await tester.tap(find.widgetWithText(FilterChip, 'Imports'));
+
+        verify(() => bloc.add(const ViewerLinkKindToggled(LinkKind.import)))
+            .called(1);
+      });
+
+      testWidgets('a crumb flies the camera out to that level', (tester) async {
+        await tester.pumpApp(
+          view(ViewerReady(map: nestedMap(), currentContainerId: 'A.B')),
+        );
+        await tester.pump();
+        // The camera starts at the world: put it inside A.B first.
+        navigator.flyTo(
+          exitPose(
+            world: world,
+            target: 'A.B',
+            from: Vector3(0, 0, 9),
+            current: null,
+          ),
+          animate: false,
+        );
+        expect(navigator.container, 'A.B');
+
+        await tester.tap(find.widgetWithText(TextButton, 'A'));
+
+        expect(navigator.isFlying, isTrue);
+        for (var i = 0; i < 40; i++) {
+          navigator.step(1 / 30);
+        }
+        expect(navigator.isFlying, isFalse);
+        expect(navigator.container, 'A');
+      });
+
+      testWidgets('crumbs jump when animations are disabled', (tester) async {
+        await tester.pumpApp(
+          view(ViewerReady(map: nestedMap(), currentContainerId: 'A')),
+          disableAnimations: true,
+        );
+        await tester.pump();
+        navigator.flyTo(
+          exitPose(
+            world: world,
+            target: 'A',
+            from: Vector3(0, 0, 9),
+            current: null,
+          ),
+          animate: false,
+        );
+
+        await tester.tap(find.widgetWithText(TextButton, 'World'));
+
+        expect(navigator.isFlying, isFalse);
+        expect(navigator.container, isNull);
+      });
     });
 
     testWidgets('uses flutter_scene by default', (tester) async {
