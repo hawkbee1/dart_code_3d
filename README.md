@@ -54,7 +54,14 @@ Flutter GPU, which flutter_scene renders through, is enabled in each native
 platform's project files, so no extra `flutter run` flag is needed. Flutter
 3.47.1 or newer is required.
 
-**Open sample** on the home screen shows the bundled map of a small weather app
+The home screen lists the maps you made, newest first (tap to open, the menu or a swipe deletes
+with an undo, **Share** on phones and **Export** elsewhere hand the `.dc3d` over). **New analysis**
+takes a public GitHub or GitLab repository (and an optional branch or tag), a local folder
+(desktop only) or a zip file (the only choice in a browser, which cannot download from GitHub),
+shows the stages with a cancel button, and opens the map when it is saved. **Open file** reads a
+`.dc3d` or `.fscene`. Maps are files in the application support directory; in a browser they live
+in memory and are lost on reload (the home screen says so).
+**Open sample** shows the bundled map of a small weather app
 (`assets/samples/`, rebuilt by `tool/sample/build_sample.sh`).
 
 In the viewer: arrow keys fly, Page Up / Page Down (or E / Q) go up and down, Shift

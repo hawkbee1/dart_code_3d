@@ -32,6 +32,24 @@ extension RuleTexts on AppLocalizations {
   String? optionNote(RuleOption option) =>
       option.value == 'fullResolution' ? optionFullResolutionNote : option.note;
 
+  /// [value] of [rule] as a short text: `On`, an option's title, a count.
+  String ruleValueText(RuleParameter<Object> rule, Object value) =>
+      switch (rule) {
+        BoolParameter() => (value as bool) ? ruleValueOn : ruleValueOff,
+        EnumParameter(:final options) =>
+          options.where((o) => o.value == value).map(optionTitle).firstOrNull ??
+              '$value',
+        EnumSetParameter(:final options) => _joined([
+          for (final o in options)
+            if ((value as Set).contains(o.value)) optionTitle(o),
+        ]),
+        GlobListParameter() => ruleValuePatterns((value as List).length),
+        StringParameter() => value as String,
+      };
+
+  String _joined(List<String> titles) =>
+      titles.isEmpty ? ruleValueNone : titles.join(', ');
+
   /// Title of [group].
   String groupTitle(RuleGroup group) => switch (group) {
     RuleGroup.files => ruleGroupFiles,

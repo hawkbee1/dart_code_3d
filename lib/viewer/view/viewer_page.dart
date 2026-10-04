@@ -231,7 +231,10 @@ class _ViewerViewState extends State<ViewerView> {
           ],
         ),
       ),
-      ViewerFailure(:final details) => _Failure(details: details),
+      ViewerFailure(:final details, :final kind) => _Failure(
+        details: details,
+        kind: kind,
+      ),
       final ViewerReady ready => LayoutBuilder(
         builder: (context, constraints) =>
             _ready(context, bloc, ready, touchControls, constraints),
@@ -274,9 +277,10 @@ class _Message extends StatelessWidget {
 }
 
 class _Failure extends StatelessWidget {
-  const new({required this.details});
+  const new({required this.details, required this.kind});
 
   final String details;
+  final ViewerFailureKind kind;
 
   @override
   Widget build(BuildContext context) {
@@ -294,13 +298,19 @@ class _Failure extends StatelessWidget {
           ),
           SizedBox(height: spacing.md),
           Text(
-            l10n.viewerNotACodeMap,
+            switch (kind) {
+              ViewerFailureKind.unreadable => l10n.viewerNotACodeMap,
+              ViewerFailureKind.missing => l10n.viewerMapMissing,
+            },
             style: theme.textTheme.titleLarge,
             textAlign: TextAlign.center,
           ),
           SizedBox(height: spacing.sm),
           Text(
-            details,
+            switch (kind) {
+              ViewerFailureKind.unreadable => details,
+              ViewerFailureKind.missing => l10n.viewerMapMissingHint,
+            },
             style: theme.textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),

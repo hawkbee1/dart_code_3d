@@ -14,10 +14,16 @@ class App extends StatelessWidget {
     this.flavor = AppFlavor.production,
     String initialLocation = '/',
     GoRouter? router,
+    PlatformCapabilities? capabilities,
+    FileDialogs? fileDialogs,
+    FileExporter? fileExporter,
     super.key,
   }) : router =
            router ??
-           GoRouter(routes: $appRoutes, initialLocation: initialLocation);
+           GoRouter(routes: $appRoutes, initialLocation: initialLocation),
+       capabilities = capabilities ?? PlatformCapabilities.current,
+       fileDialogs = fileDialogs ?? const FilePickerDialogs(),
+       fileExporter = fileExporter ?? PlatformFileExporter();
 
   final SettingsRepository settingsRepository;
 
@@ -29,6 +35,15 @@ class App extends StatelessWidget {
   /// The router; injectable for tests.
   final GoRouter router;
 
+  /// What this platform can do (the running platform's by default).
+  final PlatformCapabilities capabilities;
+
+  /// The dialogs that pick files and folders (the native ones by default).
+  final FileDialogs fileDialogs;
+
+  /// Shares, saves or downloads a map (the platform's by default).
+  final FileExporter fileExporter;
+
   @override
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
@@ -36,6 +51,9 @@ class App extends StatelessWidget {
         RepositoryProvider.value(value: settingsRepository),
         RepositoryProvider.value(value: codeMapRepository),
         RepositoryProvider.value(value: flavor),
+        RepositoryProvider.value(value: capabilities),
+        RepositoryProvider<FileDialogs>.value(value: fileDialogs),
+        RepositoryProvider<FileExporter>.value(value: fileExporter),
       ],
       child: BlocProvider(
         create: (_) =>

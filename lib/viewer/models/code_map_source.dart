@@ -37,6 +37,19 @@ final class BytesCodeMapSource extends CodeMapSource {
   List<Object?> get props => [name, bytes];
 }
 
+/// A code map kept in the app's storage (an analysis or a file opened
+/// earlier), by id.
+final class StoredCodeMapSource extends CodeMapSource {
+  /// Creates the source of the stored map [id].
+  const new(this.id);
+
+  /// The id in the store.
+  final String id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
 /// A `.dc3d` on the local disk (native platforms, development flavor only:
 /// `--dart-define=DC3D_OPEN=<path>`).
 final class LocalFileCodeMapSource extends CodeMapSource {

@@ -82,7 +82,12 @@ class ViewerBloc extends Bloc<ViewerEvent, ViewerState> {
         ),
         BytesCodeMapSource(:final bytes) => bytes,
         LocalFileCodeMapSource(:final path) => await _readFile(path),
+        StoredCodeMapSource(:final id) => (await _repository.load(id))?.bytes,
       };
+      if (bytes == null) {
+        emit(const ViewerFailure('', kind: ViewerFailureKind.missing));
+        return;
+      }
       emit(ViewerReady(map: await _repository.openBytes(bytes)));
     } on BuildFailure catch (failure) {
       emit(ViewerFailure(failure.message));

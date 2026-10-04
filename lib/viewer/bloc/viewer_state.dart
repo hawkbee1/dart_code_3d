@@ -93,14 +93,26 @@ final class ViewerReady extends ViewerState {
   ];
 }
 
+/// Why a code map could not be opened.
+enum ViewerFailureKind {
+  /// The data is not a readable code map.
+  unreadable,
+
+  /// A stored map that is not stored any more.
+  missing,
+}
+
 /// The code map could not be opened.
 final class ViewerFailure extends ViewerState {
   /// Creates the state.
-  const new(this.details);
+  const new(this.details, {this.kind = ViewerFailureKind.unreadable});
 
   /// Technical details, shown under the localized message.
   final String details;
 
+  /// Why it failed.
+  final ViewerFailureKind kind;
+
   @override
-  List<Object?> get props => [details];
+  List<Object?> get props => [details, kind];
 }

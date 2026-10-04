@@ -25,18 +25,21 @@ class AppBlocObserver extends BlocObserver {
   }
 }
 
-/// Builds the app of [flavor] with its real repositories. [initialLocation]
-/// is the first route (the home screen by default).
-App buildApp(AppFlavor flavor, {String initialLocation = '/'}) => App(
-  settingsRepository: SettingsRepository(preferences: SharedPreferencesAsync()),
-  // Session 15 replaces the in-memory store with platform storage.
-  codeMapRepository: CodeMapRepository(
-    sourceClient: CodeSourceClient(),
-    store: InMemoryCodeMapStore(),
-  ),
-  flavor: flavor,
-  initialLocation: initialLocation,
-);
+/// Builds the app of [flavor] with its real repositories: maps are kept in
+/// files on native platforms and in memory on the web. [initialLocation] is
+/// the first route (the home screen by default).
+Future<App> buildApp(AppFlavor flavor, {String initialLocation = '/'}) async =>
+    App(
+      settingsRepository: SettingsRepository(
+        preferences: SharedPreferencesAsync(),
+      ),
+      codeMapRepository: CodeMapRepository(
+        sourceClient: CodeSourceClient(),
+        store: await createCodeMapStore(),
+      ),
+      flavor: flavor,
+      initialLocation: initialLocation,
+    );
 
 Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
   // Plugins (shared_preferences, flutter_scene) need the binding first.

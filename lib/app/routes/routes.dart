@@ -48,21 +48,28 @@ class NewAnalysisRoute extends GoRouteData with $NewAnalysisRoute {
       const NewAnalysisPage();
 }
 
-/// `/viewer`: the 3D view of the bundled sample, or of the local [file]
-/// (`/viewer?file=<path>`, development flavor only).
+/// `/viewer`: the 3D view of the stored map [id] (`/viewer?id=<id>`), of
+/// the local [file] (`/viewer?file=<path>`, development flavor only), or of
+/// the bundled sample.
 @immutable
 class ViewerRoute extends GoRouteData with $ViewerRoute {
-  const new({this.file});
+  const new({this.id, this.file});
+
+  /// A map in the app's storage.
+  final String? id;
 
   /// A local `.dc3d` path; ignored outside the development flavor.
   final String? file;
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
+    final id = this.id;
     final file = this.file;
     final developer = context.read<AppFlavor>() == AppFlavor.development;
     return ViewerPage(
-      source: file != null && developer
+      source: id != null
+          ? StoredCodeMapSource(id)
+          : file != null && developer
           ? LocalFileCodeMapSource(file)
           : CodeMapSource.sample,
     );
