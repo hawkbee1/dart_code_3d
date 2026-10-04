@@ -38,6 +38,17 @@ class NavigationInput {
   /// Continuous look, in logical pixels per second (the trackball).
   Offset lookRate = Offset.zero;
 
+  /// Whether the user is pressing or touching anything.
+  bool get active =>
+      forward ||
+      back ||
+      left ||
+      right ||
+      up ||
+      down ||
+      throttle != 0 ||
+      lookRate != Offset.zero;
+
   /// Releases everything.
   void clear() {
     forward = back = left = right = up = down = boost = false;
@@ -87,15 +98,19 @@ class FlyNavigator {
   FlyCameraController _controller;
   final _heldKeys = <LogicalKeyboardKey>{};
   String? _container;
+  _Flight? _flight;
 
   /// The sphere the camera is in (the world when null).
   String? get container => _container;
 
+  /// Whether the camera is on an automatic flight ([flyTo]).
+  bool get isFlying => _flight != null;
+
   /// The eye position.
-  Vector3 get position => _controller.position;
+  Vector3 get position => _flight?.position ?? _controller.position;
 
   /// The unit look direction.
-  Vector3 get forward => _controller.forward;
+  Vector3 get forward => _flight?.forward ?? _controller.forward;
 
   /// The current pose.
   CameraPose get pose =>
@@ -118,8 +133,34 @@ class FlyNavigator {
   /// Turns the view by a drag of [delta] logical pixels.
   void look(Offset delta) => _controller.look(delta);
 
+  /// Flies the camera to [destination] over [duration] seconds, or jumps
+  /// there without [animate]. Touching any control takes the camera back.
+  void flyTo(
+    CameraPose destination, {
+    double duration = 1,
+    bool animate = true,
+  }) {
+    if (!animate || duration <= 0) {
+      _jumpTo(destination);
+      _trackContainer();
+      return;
+    }
+    _flight = _Flight(from: pose, to: destination, duration: duration);
+  }
+
   /// Advances the flight by [deltaSeconds].
   void step(double deltaSeconds) {
+    final flight = _flight;
+    if (flight != null) {
+      if (input.active) {
+        _jumpTo(pose);
+      } else {
+        flight.advance(deltaSeconds, world.obstacles);
+        if (flight.done) _jumpTo(flight.to);
+        _trackContainer();
+        return;
+      }
+    }
     final throttle = input.throttle.clamp(-1.0, 1.0);
     _hold({
       if (throttle > 0 || (throttle == 0 && input.forward))
@@ -137,20 +178,37 @@ class FlyNavigator {
     _controller
       ..update(deltaSeconds)
       ..position = resolveCollisions(_controller.position, world.obstacles);
-    final container = findContainer(position, world.map, world.positions);
-    if (container != _container) {
-      _container = container;
-      onContainerChanged?.call(container);
-    }
+    _trackContainer();
   }
 
   /// Returns to the start pose and releases every input.
   void reset() {
     input.clear();
-    _heldKeys.clear();
-    _controller = _controllerAt(start, baseSpeed);
-    _attach();
+    _jumpTo(start);
     _container = findContainer(position, world.map, world.positions);
+  }
+
+  /// Puts the camera at [destination] (pushed out of solid spheres).
+  void _jumpTo(CameraPose destination) {
+    final position = resolveCollisions(destination.position, world.obstacles);
+    _flight = null;
+    _heldKeys.clear();
+    _controller = _controllerAt(
+      CameraPose(
+        position: position,
+        target: destination.target + (position - destination.position),
+      ),
+      baseSpeed,
+    );
+    _attach();
+  }
+
+  void _trackContainer() {
+    final container = findContainer(position, world.map, world.positions);
+    if (container != _container) {
+      _container = container;
+      onContainerChanged?.call(container);
+    }
   }
 
   void _attach() => Node(name: 'camera').addComponent(_controller);
@@ -190,5 +248,37 @@ class FlyNavigator {
       pitch: math.asin(direction.y.clamp(-1.0, 1.0)),
       speed: speed,
     );
+  }
+}
+
+/// An automatic flight between two poses: smooth start and stop, the camera
+/// pushed out of solid spheres on the way.
+class _Flight {
+  new({required this.from, required this.to, required this.duration})
+    : position = from.position.clone(),
+      forward = (from.target - from.position).normalized();
+
+  final CameraPose from;
+  final CameraPose to;
+  final double duration;
+
+  double _elapsed = 0;
+
+  Vector3 position;
+  Vector3 forward;
+
+  bool get done => _elapsed >= duration;
+
+  void advance(double deltaSeconds, List<Obstacle> obstacles) {
+    _elapsed += deltaSeconds;
+    final t = (_elapsed / duration).clamp(0.0, 1.0);
+    final k = t * t * (3 - 2 * t);
+    final end = to.position;
+    final point = from.position + (end - from.position) * k;
+    position = resolveCollisions(point, obstacles);
+    final start = (from.target - from.position).normalized();
+    final finish = (to.target - to.position).normalized();
+    final blended = start * (1 - k) + finish * k;
+    forward = blended.length2 < 1e-12 ? finish : blended.normalized();
   }
 }

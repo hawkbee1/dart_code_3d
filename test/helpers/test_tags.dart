@@ -2,4 +2,7 @@
 abstract final class TestTag {
   /// 2D golden (screenshot) tests.
   static const golden = 'golden';
+
+  /// Benchmarks: slow, and sensitive to the machine. Run on demand.
+  static const slow = 'slow';
 }

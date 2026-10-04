@@ -1,14 +1,5 @@
 part of 'viewer_bloc.dart';
 
-/// What is seen from inside a sphere.
-enum ViewMode {
-  /// Only the inside of the current sphere.
-  interior,
-
-  /// The inside, plus the outer world through a transparent shell.
-  window,
-}
-
 /// The state of the viewer.
 sealed class ViewerState extends Equatable {
   const new();
@@ -52,6 +43,18 @@ final class ViewerReady extends ViewerState {
 
   /// Whether labels are drawn.
   final bool labelsOn;
+
+  /// What is drawn: derived from the other fields, computed once per state.
+  VisibleWorld get visible => _visible[this] ??= resolveVisibility(
+    index: VisibilityIndex.of(map),
+    containerId: currentContainerId,
+    mode: viewMode,
+    linkKinds: visibleLinkKinds,
+    selectedId: selectedId,
+  );
+
+  // One visible world per state (states are immutable).
+  static final _visible = Expando<VisibleWorld>('visible world');
 
   /// A copy with the given fields replaced. Pass a function for the
   /// nullable ids, so they can be cleared.

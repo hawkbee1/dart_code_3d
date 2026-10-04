@@ -8,7 +8,8 @@ import 'package:material_ui/material_ui.dart';
 
 extension PumpApp on WidgetTester {
   /// Pumps [widget] inside the app's real themes and localizations, with an
-  /// optional [settingsBloc], mock [router], [textScale] and [flavor].
+  /// optional [settingsBloc], mock [router], [textScale],
+  /// [disableAnimations] and [flavor].
   Future<void> pumpApp(
     Widget widget, {
     ThemeMode themeMode = ThemeMode.light,
@@ -16,6 +17,7 @@ extension PumpApp on WidgetTester {
     SettingsBloc? settingsBloc,
     GoRouter? router,
     double textScale = 1,
+    bool disableAnimations = false,
     AppFlavor flavor = AppFlavor.production,
   }) {
     Widget child = RepositoryProvider.value(value: flavor, child: widget);
@@ -35,8 +37,10 @@ extension PumpApp on WidgetTester {
         localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, app) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScale),
+            disableAnimations: disableAnimations,
+          ),
           child: app!,
         ),
         home: child,

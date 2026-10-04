@@ -18,6 +18,10 @@ import '../../test/helpers/goldens.dart';
 import 'frame_stats.dart';
 import 'visual_scenarios.dart';
 
+/// Captures only the scenario with this id (all when empty): handy while
+/// working on one.
+const _only = String.fromEnvironment('DC3D_SCENARIO');
+
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   final captures = <String, String>{};
@@ -26,6 +30,7 @@ void main() {
     tearDownAll(() => binding.reportData = {'captures': captures});
 
     for (final scenario in visualScenarios) {
+      if (_only.isNotEmpty && scenario.id != _only) continue;
       for (final device in GoldenDevice.values) {
         for (final themeMode in [ThemeMode.light, ThemeMode.dark]) {
           final name = '${scenario.id}/${device.name}_${themeMode.name}';

@@ -59,6 +59,8 @@ platform's project files, so no extra `flutter run` flag is needed. Flutter
 
 In the viewer: arrow keys fly, Page Up / Page Down (or E / Q) go up and down, Shift
 boosts, dragging looks around, Home returns to the start and `?` lists the controls.
+Flying into a sphere shows what is inside it; **V** (or the button) switches between the inside
+view and the window view, the breadcrumb flies back out, and the legend shows or hides link kinds.
 Phones and tablets get an on-screen trackball and move slider (Settings → Touch controls:
 automatic, always or never).
 
@@ -113,6 +115,18 @@ sane render, and compared with `visual_baselines/`. From the hawkbee root:
 $ tool/visual_test.sh            # compare; captures and diffs in build/visual/
 $ tool/visual_test.sh --update   # refresh the baselines, then look at them
 ```
+
+### Benchmarks
+
+`resolveVisibility` (what is visible from inside a sphere, and the links it draws) has a benchmark
+on an AltMe-sized map and on 100k links. It is tagged `slow`, so run it on demand; add a real map
+with `--dart-define=DC3D_BENCH_MAP=<path of a .dc3d>`:
+
+```sh
+$ very_good test -t slow test/viewer/world/visibility_benchmark_test.dart
+```
+
+Run a single 3D scenario with `DC3D_SCENARIO=<id> tool/visual_test.sh [--update]`.
 
 ### Performance
 

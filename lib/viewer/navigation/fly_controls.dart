@@ -20,6 +20,7 @@ import 'package:settings_repository/settings_repository.dart';
 /// | Shift | boost |
 /// | drag | look |
 /// | Home | back to the start pose |
+/// | V | [onToggleViewMode] |
 /// | ? | [onHelp] |
 ///
 /// The area takes the keyboard focus when it appears and when tapped, so
@@ -31,6 +32,7 @@ class FlyControls extends StatefulWidget {
     required this.child,
     super.key,
     this.onHelp,
+    this.onToggleViewMode,
     this.platform,
   });
 
@@ -45,6 +47,9 @@ class FlyControls extends StatefulWidget {
 
   /// Shows the controls help.
   final VoidCallback? onHelp;
+
+  /// Switches between interior and window view (the `V` key).
+  final VoidCallback? onToggleViewMode;
 
   /// The platform deciding automatic touch controls
   /// ([defaultTargetPlatform] by default).
@@ -100,6 +105,8 @@ class _FlyControlsState extends State<FlyControls> {
       input.boost = pressed;
     } else if (key == LogicalKeyboardKey.home) {
       if (event is KeyDownEvent) widget.navigator.reset();
+    } else if (key == LogicalKeyboardKey.keyV) {
+      if (event is KeyDownEvent) widget.onToggleViewMode?.call();
     } else if (event.character == '?') {
       if (event is KeyDownEvent) widget.onHelp?.call();
     } else {
@@ -372,6 +379,7 @@ class ControlsHelpDialog extends StatelessWidget {
       (keys('Shift'), l10n.viewerKeyBoost),
       (icons(const [Icons.mouse_outlined]), l10n.viewerKeyLook),
       (keys('Home'), l10n.viewerKeyHome),
+      (keys('V'), l10n.viewerKeyView),
       (keys('?'), l10n.viewerKeyHelp),
     ];
     return AlertDialog(

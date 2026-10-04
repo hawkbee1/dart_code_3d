@@ -157,6 +157,70 @@ void main() {
       );
     });
 
+    group('visible world', () {
+      test('is derived from the container, mode, link kinds and selection', () {
+        final ready = ViewerReady(map: nestedMap());
+        final inA = ready.copyWith(currentContainerId: () => 'A');
+
+        expect(ready.visible.openContainers, isEmpty);
+        expect(ready.visible.visibleSpheres, hasLength(5));
+        expect(inA.visible.openContainers, ['A']);
+        expect(inA.visible.visibleSpheres, ['A.m', 'A.B']);
+        expect(
+          inA.copyWith(viewMode: ViewMode.window).visible.visibleSpheres,
+          containsAll(['main', 'A.m', 'A.B']),
+        );
+        expect(ready.copyWith(visibleLinkKinds: {}).visible.links, isEmpty);
+        expect(
+          ready.copyWith(selectedId: () => 'pkg').visible.links,
+          hasLength(1),
+        );
+      });
+
+      test('is worked out once per state', () {
+        final ready = ViewerReady(map: nestedMap());
+
+        expect(ready.visible, same(ready.visible));
+        expect(
+          ready.copyWith(labelsOn: false).visible,
+          isNot(same(ready.visible)),
+        );
+      });
+
+      blocTest<ViewerBloc, ViewerState>(
+        'follows the events',
+        build: build,
+        seed: () => ViewerReady(map: nestedMap()),
+        act: (bloc) => bloc
+          ..add(const ViewerContainerChanged('A'))
+          ..add(const ViewerViewModeToggled())
+          ..add(const ViewerLinkKindToggled(LinkKind.call))
+          ..add(const ViewerNodeSelected('A.m')),
+        expect: () => [
+          isA<ViewerReady>().having(
+            (s) => s.visible.openContainers,
+            'open containers',
+            ['A'],
+          ),
+          isA<ViewerReady>().having(
+            (s) => s.visible.visibleSpheres,
+            'window view',
+            contains('main'),
+          ),
+          isA<ViewerReady>().having(
+            (s) => s.visible.links.map((l) => l.kind).toSet(),
+            'link kinds without calls',
+            isNot(contains(LinkKind.call)),
+          ),
+          isA<ViewerReady>().having(
+            (s) => s.visible.links,
+            'links after selecting a hidden node',
+            isNotNull,
+          ),
+        ],
+      );
+    });
+
     test('events and states compare by value', () {
       final events = [
         const ViewerOpened(CodeMapSource.sample),

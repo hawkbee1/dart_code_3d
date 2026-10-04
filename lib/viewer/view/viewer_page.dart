@@ -6,6 +6,7 @@ import 'package:dart_code_3d/viewer/bloc/viewer_bloc.dart';
 import 'package:dart_code_3d/viewer/models/code_map_source.dart';
 import 'package:dart_code_3d/viewer/models/local_file.dart';
 import 'package:dart_code_3d/viewer/navigation/fly_controls.dart';
+import 'package:dart_code_3d/viewer/navigation/world_controller.dart';
 import 'package:dart_code_3d/viewer/view/code_world_view.dart';
 import 'package:dart_code_3d/viewer/widgets/debug_overlay.dart';
 import 'package:dart_code_3d/viewer/widgets/viewer_hud.dart';
@@ -51,11 +52,13 @@ class ViewerView extends StatefulWidget {
 
 class _ViewerViewState extends State<ViewerView> {
   bool _debugOverlay = false;
+  final _worldController = WorldController();
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final state = context.watch<ViewerBloc>().state;
+    final bloc = context.watch<ViewerBloc>();
+    final state = bloc.state;
     final developer = context.read<AppFlavor>() == AppFlavor.development;
     final touchControls = context.select<SettingsBloc, TouchControlsMode>(
       (bloc) => bloc.state.touchControls,
@@ -76,21 +79,38 @@ class _ViewerViewState extends State<ViewerView> {
         ),
       ),
       ViewerFailure(:final details) => _Failure(details: details),
-      ViewerReady(:final map) => Stack(
+      final ViewerReady ready => Stack(
         fit: StackFit.expand,
         children: [
           CodeWorldView(
-            map: map,
+            map: ready.map,
             initialize: widget.initialize ?? CodeWorldView.defaultInitialize,
             sceneBuilder: widget.sceneBuilder ?? buildCodeWorldScene,
+            visible: ready.visible,
+            viewMode: ready.viewMode,
+            controller: _worldController,
             touchControls: touchControls,
-            onContainerChanged: (id) =>
-                context.read<ViewerBloc>().add(ViewerContainerChanged(id)),
+            onContainerChanged: (id) => bloc.add(ViewerContainerChanged(id)),
+            // The toggle only means something inside a sphere.
+            onToggleViewMode: ready.currentContainerId == null
+                ? null
+                : () => bloc.add(const ViewerViewModeToggled()),
             onHelp: () => ControlsHelpDialog.show(context),
           ),
-          ViewerHud(map: map),
+          ViewerHud(
+            state: ready,
+            onCrumbTap: (id) => _worldController.flyToContainer(
+              id,
+              animate: !MediaQuery.disableAnimationsOf(context),
+            ),
+            onToggleViewMode: () => bloc.add(const ViewerViewModeToggled()),
+            onToggleLinkKind: (kind) => bloc.add(ViewerLinkKindToggled(kind)),
+          ),
           if (_debugOverlay)
-            DebugOverlay(instanceCount: map.graph.topLevel.length),
+            DebugOverlay(
+              instanceCount: ready.visible.visibleSpheres.length,
+              linkCount: ready.visible.links.length,
+            ),
         ],
       ),
     };

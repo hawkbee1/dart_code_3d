@@ -399,5 +399,62 @@
     "viewerClose": "Close",
     "@viewerClose": {
         "description": "Close button of dialogs"
+    },
+    "viewerWorldCrumb": "World",
+    "@viewerWorldCrumb": {
+        "description": "First crumb of the viewer breadcrumb: the whole code map"
+    },
+    "viewerBreadcrumbLabel": "Fly to {name}",
+    "@viewerBreadcrumbLabel": {
+        "description": "Semantics label of a breadcrumb crumb",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "viewerBreadcrumbRegion": "Where you are",
+    "@viewerBreadcrumbRegion": {
+        "description": "Semantics label of the breadcrumb"
+    },
+    "viewerLinkCalls": "Calls",
+    "@viewerLinkCalls": {
+        "description": "Link legend: calls between methods"
+    },
+    "viewerLinkImports": "Imports",
+    "@viewerLinkImports": {
+        "description": "Link legend: imports between files"
+    },
+    "viewerLinkImplements": "Implements",
+    "@viewerLinkImplements": {
+        "description": "Link legend: implements clauses"
+    },
+    "viewerLinkMixins": "Mixins",
+    "@viewerLinkMixins": {
+        "description": "Link legend: with clauses"
+    },
+    "viewerLinkExtendsExternal": "Extends (external)",
+    "@viewerLinkExtendsExternal": {
+        "description": "Link legend: extends a class from outside the project"
+    },
+    "viewerLegendRegion": "Links",
+    "@viewerLegendRegion": {
+        "description": "Semantics label of the link legend"
+    },
+    "viewerViewInterior": "Inside",
+    "@viewerViewInterior": {
+        "description": "View mode: only the inside of the current sphere"
+    },
+    "viewerViewWindow": "Window",
+    "@viewerViewWindow": {
+        "description": "View mode: the inside plus the outer world"
+    },
+    "viewerToggleViewTooltip": "Switch between inside and window view (V)",
+    "@viewerToggleViewTooltip": {
+        "description": "Tooltip of the view mode toggle"
+    },
+    "viewerKeyView": "Switch inside / window view",
+    "@viewerKeyView": {
+        "description": "Help: V key"
     }
 }

@@ -5,13 +5,15 @@ import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Frame statistics for development builds: frames per second, average
-/// build (UI thread) and raster times, and the number of spheres drawn.
+/// build (UI thread) and raster times, and the number of spheres and links
+/// drawn.
 ///
 /// The numbers come from Flutter's frame timings, so they are meaningful
 /// in profile builds only. Developer-facing: the texts are not localized.
 class DebugOverlay extends StatefulWidget {
   const new({
     required this.instanceCount,
+    required this.linkCount,
     super.key,
     this.addTimingsCallback,
     this.removeTimingsCallback,
@@ -19,6 +21,9 @@ class DebugOverlay extends StatefulWidget {
 
   /// The number of spheres drawn.
   final int instanceCount;
+
+  /// The number of links drawn.
+  final int linkCount;
 
   /// Registers for frame timings (`SchedulerBinding` by default).
   final void Function(TimingsCallback callback)? addTimingsCallback;
@@ -90,7 +95,8 @@ class _DebugOverlayState extends State<DebugOverlay> {
           child: Padding(
             padding: EdgeInsets.all(spacing.sm),
             child: Text(
-              '$_summary\n${widget.instanceCount} spheres · 1 draw',
+              '$_summary\n'
+              '${widget.instanceCount} spheres · ${widget.linkCount} links',
               style: const TextStyle(
                 color: Colors.white,
                 fontFamily: 'monospace',

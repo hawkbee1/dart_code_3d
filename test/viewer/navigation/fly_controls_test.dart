@@ -12,12 +12,14 @@ void main() {
   group(FlyControls, () {
     late FlyNavigator navigator;
     late int helpShown;
+    late int viewToggled;
 
     setUp(() {
       navigator = FlyNavigator(
         world: CodeWorld(worldMap(), CodeWorldColors.light),
       );
       helpShown = 0;
+      viewToggled = 0;
     });
 
     Future<void> pump(
@@ -30,6 +32,7 @@ void main() {
         touchControls: mode,
         platform: platform,
         onHelp: () => helpShown++,
+        onToggleViewMode: () => viewToggled++,
         child: const ColoredBox(color: Colors.black),
       ),
     );
@@ -82,6 +85,17 @@ void main() {
         await tester.sendKeyUpEvent(LogicalKeyboardKey.slash);
 
         expect(helpShown, 1);
+      });
+
+      testWidgets('V switches between inside and window view', (tester) async {
+        await pump(tester);
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.keyV);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.keyV);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.keyV);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.keyV);
+
+        expect(viewToggled, 2);
       });
 
       testWidgets('lets other keys through', (tester) async {
