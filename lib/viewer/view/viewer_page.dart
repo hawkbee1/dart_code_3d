@@ -1,15 +1,18 @@
 import 'package:code_map_repository/code_map_repository.dart';
 import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/l10n/l10n.dart';
+import 'package:dart_code_3d/settings/settings.dart';
 import 'package:dart_code_3d/viewer/bloc/viewer_bloc.dart';
 import 'package:dart_code_3d/viewer/models/code_map_source.dart';
 import 'package:dart_code_3d/viewer/models/local_file.dart';
+import 'package:dart_code_3d/viewer/navigation/fly_controls.dart';
 import 'package:dart_code_3d/viewer/view/code_world_view.dart';
 import 'package:dart_code_3d/viewer/widgets/debug_overlay.dart';
 import 'package:dart_code_3d/viewer/widgets/viewer_hud.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:settings_repository/settings_repository.dart';
 
 /// Opens a code map from [source] and shows it in 3D.
 class ViewerPage extends StatelessWidget {
@@ -54,6 +57,9 @@ class _ViewerViewState extends State<ViewerView> {
     final l10n = context.l10n;
     final state = context.watch<ViewerBloc>().state;
     final developer = context.read<AppFlavor>() == AppFlavor.development;
+    final touchControls = context.select<SettingsBloc, TouchControlsMode>(
+      (bloc) => bloc.state.touchControls,
+    );
     final title = switch (state) {
       ViewerReady(:final map) => map.graph.project.source.label,
       _ => l10n.appTitle,
@@ -77,6 +83,10 @@ class _ViewerViewState extends State<ViewerView> {
             map: map,
             initialize: widget.initialize ?? CodeWorldView.defaultInitialize,
             sceneBuilder: widget.sceneBuilder ?? buildCodeWorldScene,
+            touchControls: touchControls,
+            onContainerChanged: (id) =>
+                context.read<ViewerBloc>().add(ViewerContainerChanged(id)),
+            onHelp: () => ControlsHelpDialog.show(context),
           ),
           ViewerHud(map: map),
           if (_debugOverlay)
@@ -90,12 +100,20 @@ class _ViewerViewState extends State<ViewerView> {
           const SingleActivator(LogicalKeyboardKey.f3): () =>
               setState(() => _debugOverlay = !_debugOverlay),
       },
-      child: Focus(
-        autofocus: true,
-        child: Scaffold(
-          appBar: AppBar(title: Text(title)),
-          body: body,
+      // The 3D area (FlyControls) holds the focus; F3 bubbles up to here.
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+          actions: [
+            if (state is ViewerReady)
+              IconButton(
+                tooltip: l10n.viewerControlsTooltip,
+                icon: const Icon(Icons.keyboard_outlined),
+                onPressed: () => ControlsHelpDialog.show(context),
+              ),
+          ],
         ),
+        body: body,
       ),
     );
   }

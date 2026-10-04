@@ -55,6 +55,40 @@ class SettingsView extends StatelessWidget {
                   onChanged: (mode) => bloc.add(SettingsThemeModeChanged(mode)),
                 ),
               ),
+              header(l10n.settingsViewer),
+              ListTile(
+                title: Text(l10n.settingsTouchControls),
+                subtitle: Padding(
+                  padding: EdgeInsets.only(top: spacing.xs),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.settingsTouchControlsHint),
+                      SizedBox(height: spacing.sm),
+                      Wrap(
+                        spacing: spacing.sm,
+                        runSpacing: spacing.xs,
+                        children: [
+                          for (final (mode, label) in [
+                            (TouchControlsMode.auto, l10n.settingsTouchAuto),
+                            (
+                              TouchControlsMode.always,
+                              l10n.settingsTouchAlways,
+                            ),
+                            (TouchControlsMode.never, l10n.settingsTouchNever),
+                          ])
+                            ChoiceChip(
+                              label: Text(label),
+                              selected: state.touchControls == mode,
+                              onSelected: (_) =>
+                                  bloc.add(SettingsTouchControlsChanged(mode)),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               header(l10n.settingsRules),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: spacing.md),

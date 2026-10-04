@@ -323,5 +323,81 @@
                 "type": "int"
             }
         }
+    },
+    "settingsViewer": "Viewer",
+    "@settingsViewer": {
+        "description": "Settings section of the 3D viewer"
+    },
+    "settingsTouchControls": "Touch controls",
+    "@settingsTouchControls": {
+        "description": "Title of the touch controls setting"
+    },
+    "settingsTouchControlsHint": "On-screen trackball and move control for flying without a keyboard.",
+    "@settingsTouchControlsHint": {
+        "description": "Description of the touch controls setting"
+    },
+    "settingsTouchAuto": "Automatic",
+    "@settingsTouchAuto": {
+        "description": "Touch controls on phones and tablets, or after touch input"
+    },
+    "settingsTouchAlways": "Always",
+    "@settingsTouchAlways": {
+        "description": "Touch controls always shown"
+    },
+    "settingsTouchNever": "Never",
+    "@settingsTouchNever": {
+        "description": "Touch controls never shown"
+    },
+    "viewerControlsTooltip": "Flying controls",
+    "@viewerControlsTooltip": {
+        "description": "Tooltip of the viewer help button"
+    },
+    "viewerControlsTitle": "Flying controls",
+    "@viewerControlsTitle": {
+        "description": "Title of the controls help dialog"
+    },
+    "viewerKeyMove": "Fly forward, back and sideways",
+    "@viewerKeyMove": {
+        "description": "Help: arrow keys"
+    },
+    "viewerKeyUpDown": "Fly up and down",
+    "@viewerKeyUpDown": {
+        "description": "Help: Page Up/Down, Q/E"
+    },
+    "viewerKeyBoost": "Fly faster",
+    "@viewerKeyBoost": {
+        "description": "Help: Shift"
+    },
+    "viewerKeyLook": "Look around",
+    "@viewerKeyLook": {
+        "description": "Help: mouse drag"
+    },
+    "viewerKeyHome": "Back to the start",
+    "@viewerKeyHome": {
+        "description": "Help: Home key"
+    },
+    "viewerKeyHelp": "Show this help",
+    "@viewerKeyHelp": {
+        "description": "Help: question mark key"
+    },
+    "viewerTouchLook": "Trackball: look around",
+    "@viewerTouchLook": {
+        "description": "Help and semantics of the trackball"
+    },
+    "viewerTouchMove": "Slider: fly forward or back",
+    "@viewerTouchMove": {
+        "description": "Help and semantics of the move slider"
+    },
+    "viewerFlyUp": "Fly up",
+    "@viewerFlyUp": {
+        "description": "Semantics of the up button"
+    },
+    "viewerFlyDown": "Fly down",
+    "@viewerFlyDown": {
+        "description": "Semantics of the down button"
+    },
+    "viewerClose": "Close",
+    "@viewerClose": {
+        "description": "Close button of dialogs"
     }
 }

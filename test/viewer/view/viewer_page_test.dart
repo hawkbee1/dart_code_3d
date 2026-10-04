@@ -13,6 +13,7 @@ import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/code_maps.dart';
 import '../../helpers/helpers.dart';
+import '../../helpers/settings.dart';
 import '../../helpers/viewer.dart';
 
 class _MockCodeMapRepository extends Mock implements CodeMapRepository;
@@ -34,6 +35,7 @@ void main() {
           value: repository,
           child: const ViewerPage(),
         ),
+        settingsBloc: settingsBlocWith(),
       );
       await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pump();
@@ -114,6 +116,48 @@ void main() {
       await tester.pump();
 
       expect(find.byType(DebugOverlay), findsNothing);
+    });
+
+    testWidgets('the controls button and the ? key show the help', (
+      tester,
+    ) async {
+      await tester.pumpApp(
+        viewerViewWith(viewerBlocWith(ViewerReady(map: map))),
+      );
+      await tester.pump();
+
+      await tester.tap(find.byTooltip('Flying controls'));
+      await tester.pumpAndSettle();
+      expect(find.text('Back to the start'), findsOneWidget);
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.slash, character: '?');
+      await tester.pumpAndSettle();
+      expect(find.text('Back to the start'), findsOneWidget);
+    });
+
+    testWidgets('reports the sphere the camera flies into', (tester) async {
+      final bloc = viewerBlocWith(ViewerReady(map: map));
+      late FlyNavigator navigator;
+      await tester.pumpApp(
+        viewerViewWith(
+          bloc,
+          sceneBuilder: (context, world, flyNavigator) {
+            navigator = flyNavigator;
+            return const SizedBox.expand();
+          },
+        ),
+      );
+      await tester.pump();
+
+      // The start pose looks at main(): flying forward enters it.
+      navigator.input.forward = true;
+      for (var i = 0; i < 300 && navigator.container == null; i++) {
+        navigator.step(1 / 30);
+      }
+
+      verify(() => bloc.add(const ViewerContainerChanged('main'))).called(1);
     });
 
     testWidgets('uses flutter_scene by default', (tester) async {

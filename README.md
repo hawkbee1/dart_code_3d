@@ -57,6 +57,11 @@ platform's project files, so no extra `flutter run` flag is needed. Flutter
 **Open sample** on the home screen shows the bundled map of a small weather app
 (`assets/samples/`, rebuilt by `tool/sample/build_sample.sh`).
 
+In the viewer: arrow keys fly, Page Up / Page Down (or E / Q) go up and down, Shift
+boosts, dragging looks around, Home returns to the start and `?` lists the controls.
+Phones and tablets get an on-screen trackball and move slider (Settings → Touch controls:
+automatic, always or never).
+
 Development flavor only:
 
 - **F3** in the viewer shows frame statistics (fps, build and raster times, sphere count);

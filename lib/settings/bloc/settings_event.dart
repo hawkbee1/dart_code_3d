@@ -23,6 +23,16 @@ final class SettingsThemeModeChanged extends SettingsEvent {
   List<Object?> get props => [themeMode];
 }
 
+/// The user picked when the viewer shows touch controls.
+final class SettingsTouchControlsChanged extends SettingsEvent {
+  const new(this.mode);
+
+  final TouchControlsMode mode;
+
+  @override
+  List<Object?> get props => [mode];
+}
+
 /// The user changed rule [id] to [value].
 final class SettingsRuleChanged extends SettingsEvent {
   const new(this.id, this.value);
