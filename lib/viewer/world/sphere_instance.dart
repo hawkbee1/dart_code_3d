@@ -1,7 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:code_graph/code_graph.dart';
-import 'package:dart_code_3d/app/theme/code_world_colors.dart';
 import 'package:equatable/equatable.dart';
 import 'package:material_ui/material_ui.dart' show Color;
 import 'package:vector_math/vector_math.dart';
@@ -36,23 +34,6 @@ class SphereInstance extends Equatable {
   @override
   List<Object?> get props => [nodeId, center, radius, color];
 }
-
-/// The spheres of the children of [containerId] (the top level when null),
-/// colored by node kind with [colors].
-List<SphereInstance> sphereInstances(
-  CodeMap map,
-  Map<String, Vector3> positions,
-  CodeWorldColors colors, {
-  String? containerId,
-}) => [
-  for (final node in map.graph.childrenOf(containerId))
-    SphereInstance(
-      nodeId: node.id,
-      center: positions[node.id]!,
-      radius: map.placements[node.id]!.radius,
-      color: linearColor(colors.nodes[node.kind]!),
-    ),
-];
 
 /// [color] (sRGB) as a linear RGBA vector, what the renderer multiplies.
 Vector4 linearColor(Color color) {

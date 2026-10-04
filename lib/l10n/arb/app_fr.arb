@@ -97,5 +97,18 @@
     "viewerTouchMove": "Curseur : avancer ou reculer",
     "viewerFlyUp": "Monter",
     "viewerFlyDown": "Descendre",
-    "viewerClose": "Fermer"
+    "viewerClose": "Fermer",
+    "viewerWorldCrumb": "Monde",
+    "viewerBreadcrumbLabel": "Aller à {name}",
+    "viewerBreadcrumbRegion": "Où vous êtes",
+    "viewerLinkCalls": "Appels",
+    "viewerLinkImports": "Imports",
+    "viewerLinkImplements": "Implémentations",
+    "viewerLinkMixins": "Mixins",
+    "viewerLinkExtendsExternal": "Étend (externe)",
+    "viewerLegendRegion": "Liens",
+    "viewerViewInterior": "Intérieur",
+    "viewerViewWindow": "Fenêtre",
+    "viewerToggleViewTooltip": "Basculer entre la vue intérieure et la vue fenêtre (V)",
+    "viewerKeyView": "Basculer vue intérieure / fenêtre"
 }

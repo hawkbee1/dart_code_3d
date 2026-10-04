@@ -380,6 +380,20 @@ class WeatherCache with Expiring {
 
   void clear() => _entries.clear();
 }
+
+class PersistentWeatherCache extends WeatherCache {
+  PersistentWeatherCache(this.directory);
+
+  final String directory;
+
+  String fileFor(String city) => '$directory/${city.toLowerCase()}.json';
+
+  void flush(Iterable<String> cities) {
+    for (final city in cities) {
+      write(city, Weather.empty);
+    }
+  }
+}
 === lib/weather/data/weather_repository.dart
 import 'package:weather_sample/weather/data/weather_api_client.dart';
 import 'package:weather_sample/weather/data/weather_cache.dart';

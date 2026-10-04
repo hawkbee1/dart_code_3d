@@ -4,6 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:code_graph/code_graph.dart';
 import 'package:code_map_repository/code_map_repository.dart';
 import 'package:dart_code_3d/viewer/models/code_map_source.dart';
+import 'package:dart_code_3d/viewer/world/visibility.dart';
 import 'package:equatable/equatable.dart';
 
 part 'viewer_event.dart';

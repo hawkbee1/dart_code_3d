@@ -5,7 +5,9 @@ import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/l10n/l10n.dart';
 import 'package:dart_code_3d/viewer/navigation/fly_controls.dart';
 import 'package:dart_code_3d/viewer/navigation/fly_navigator.dart';
+import 'package:dart_code_3d/viewer/navigation/world_controller.dart';
 import 'package:dart_code_3d/viewer/world/code_world.dart';
+import 'package:dart_code_3d/viewer/world/visibility.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:settings_repository/settings_repository.dart';
@@ -30,8 +32,12 @@ class CodeWorldView extends StatefulWidget {
     super.key,
     this.initialize = defaultInitialize,
     this.sceneBuilder = buildCodeWorldScene,
+    this.visible,
+    this.viewMode = ViewMode.interior,
+    this.controller,
     this.touchControls = TouchControlsMode.auto,
     this.onContainerChanged,
+    this.onToggleViewMode,
     this.onHelp,
   });
 
@@ -48,11 +54,24 @@ class CodeWorldView extends StatefulWidget {
   /// Builds the 3D area once [initialize] has completed.
   final CodeWorldSceneBuilder sceneBuilder;
 
+  /// What is visible (the top level when null): the spheres, links and
+  /// shells to draw.
+  final VisibleWorld? visible;
+
+  /// Interior or window view, for the shell of the current container.
+  final ViewMode viewMode;
+
+  /// Moves the camera on behalf of the HUD.
+  final WorldController? controller;
+
   /// When the on-screen touch controls are shown.
   final TouchControlsMode touchControls;
 
   /// Called when the camera enters or leaves a sphere.
   final ValueChanged<String?>? onContainerChanged;
+
+  /// Switches between interior and window view (the `V` key).
+  final VoidCallback? onToggleViewMode;
 
   /// Shows the controls help (the `?` key).
   final VoidCallback? onHelp;
@@ -91,10 +110,30 @@ class _CodeWorldViewState extends State<CodeWorldView> {
     if (current != null && identical(current.world.map, world.map)) {
       return current;
     }
-    return _navigator = FlyNavigator(
+    if (current != null) widget.controller?.detach(current);
+    final navigator = FlyNavigator(
       world: world,
       onContainerChanged: (id) => widget.onContainerChanged?.call(id),
     );
+    widget.controller?.attach(navigator);
+    return _navigator = navigator;
+  }
+
+  @override
+  void didUpdateWidget(CodeWorldView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final navigator = _navigator;
+    if (navigator != null && oldWidget.controller != widget.controller) {
+      oldWidget.controller?.detach(navigator);
+      widget.controller?.attach(navigator);
+    }
+  }
+
+  @override
+  void dispose() {
+    final navigator = _navigator;
+    if (navigator != null) widget.controller?.detach(navigator);
+    super.dispose();
   }
 
   @override
@@ -116,6 +155,8 @@ class _CodeWorldViewState extends State<CodeWorldView> {
       );
     }
     final world = _worldFor(colors);
+    final visible = widget.visible;
+    if (visible != null) world.show(visible, widget.viewMode);
     final navigator = _navigatorFor(world);
     return ColoredBox(
       color: colors.background,
@@ -123,6 +164,7 @@ class _CodeWorldViewState extends State<CodeWorldView> {
         navigator: navigator,
         touchControls: widget.touchControls,
         onHelp: widget.onHelp,
+        onToggleViewMode: widget.onToggleViewMode,
         child: widget.sceneBuilder(context, world, navigator),
       ),
     );
@@ -143,7 +185,14 @@ Widget buildCodeWorldScene(
   builder: (context, constraints) => SceneView(
     world.scene,
     cameraBuilder: (_) => navigator.camera(constraints.biggest),
-    onTick: (_, deltaSeconds) => navigator.step(deltaSeconds),
+    onTick: (_, deltaSeconds) {
+      navigator.step(deltaSeconds);
+      world.tick(
+        deltaSeconds,
+        animate: !MediaQuery.disableAnimationsOf(context),
+        cameraPosition: navigator.position,
+      );
+    },
   ),
 );
 
