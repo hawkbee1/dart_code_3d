@@ -1,9 +1,9 @@
+import 'package:dart_code_3d/app/theme/app_spacing.dart';
+import 'package:dart_code_3d/app/theme/code_world_colors.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The app's light and dark Material 3 themes.
-///
-/// Minimal on purpose: session 10 (docs/dart_code_3d) builds the full theme
-/// (color scheme, text theme, spacing tokens, 3D world colors).
+/// The app's light and dark Material 3 themes: the single source of colors,
+/// typography, spacing and 3D world colors.
 abstract final class AppTheme {
   /// Seed of the color scheme.
   static const Color seedColor = Color(0xFF3F7FD9);
@@ -26,6 +26,24 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       fontFamily: fontFamily,
       appBarTheme: AppBarTheme(backgroundColor: colorScheme.inversePrimary),
+      chipTheme: const ChipThemeData(showCheckmark: false),
+      extensions: [
+        const AppSpacing(),
+        if (brightness == Brightness.light)
+          CodeWorldColors.light
+        else
+          CodeWorldColors.dark,
+      ],
     );
   }
+}
+
+/// Short access to the theme extensions.
+extension AppThemeX on BuildContext {
+  /// Spacing tokens.
+  AppSpacing get spacing => Theme.of(this).extension<AppSpacing>()!;
+
+  /// 3D world colors.
+  CodeWorldColors get worldColors =>
+      Theme.of(this).extension<CodeWorldColors>()!;
 }

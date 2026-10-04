@@ -7,5 +7,297 @@
     "viewerPreparingScene": "Preparing the 3D scene…",
     "@viewerPreparingScene": {
         "description": "Shown while the 3D renderer loads its shaders and resources"
+    },
+    "homeEmptyTitle": "No code maps yet",
+    "@homeEmptyTitle": {
+        "description": "Home, empty state title"
+    },
+    "homeEmptyBody": "Analyze a Dart project to fly through its code in 3D.",
+    "@homeEmptyBody": {
+        "description": "Home, empty state text"
+    },
+    "homeNewAnalysis": "New analysis",
+    "@homeNewAnalysis": {
+        "description": "Button starting a new analysis"
+    },
+    "homeOpenFile": "Open file",
+    "@homeOpenFile": {
+        "description": "Button opening a code map file"
+    },
+    "homeShowDemo": "3D demo",
+    "@homeShowDemo": {
+        "description": "Button showing the 3D demo"
+    },
+    "homeSettingsTooltip": "Settings",
+    "@homeSettingsTooltip": {
+        "description": "Tooltip of the settings button"
+    },
+    "newAnalysisTitle": "New analysis",
+    "@newAnalysisTitle": {
+        "description": "Title of the new analysis page"
+    },
+    "newAnalysisComingSoon": "Choosing a folder, a zip file or a git repository comes in the next version.",
+    "@newAnalysisComingSoon": {
+        "description": "Placeholder of the new analysis page"
+    },
+    "settingsTitle": "Settings",
+    "@settingsTitle": {
+        "description": "Title of the settings page"
+    },
+    "settingsAppearance": "Appearance",
+    "@settingsAppearance": {
+        "description": "Settings section title"
+    },
+    "settingsThemeSystem": "System",
+    "@settingsThemeSystem": {
+        "description": "Theme mode following the device"
+    },
+    "settingsThemeLight": "Light",
+    "@settingsThemeLight": {
+        "description": "Light theme mode"
+    },
+    "settingsThemeDark": "Dark",
+    "@settingsThemeDark": {
+        "description": "Dark theme mode"
+    },
+    "settingsRules": "Analysis rules",
+    "@settingsRules": {
+        "description": "Settings section title"
+    },
+    "settingsRulesHint": "Changes apply to new analyses.",
+    "@settingsRulesHint": {
+        "description": "Hint under the rules title"
+    },
+    "settingsResetRules": "Reset to defaults",
+    "@settingsResetRules": {
+        "description": "Button resetting the rules"
+    },
+    "settingsResetTitle": "Reset the rules?",
+    "@settingsResetTitle": {
+        "description": "Reset confirmation title"
+    },
+    "settingsResetBody": "Every rule goes back to its default value.",
+    "@settingsResetBody": {
+        "description": "Reset confirmation text"
+    },
+    "settingsCancel": "Cancel",
+    "@settingsCancel": {
+        "description": "Cancel button"
+    },
+    "settingsReset": "Reset",
+    "@settingsReset": {
+        "description": "Confirm reset button"
+    },
+    "settingsComingLaterTitle": "Not available yet",
+    "@settingsComingLaterTitle": {
+        "description": "Title of the dialog for a disabled option"
+    },
+    "settingsOk": "OK",
+    "@settingsOk": {
+        "description": "OK button"
+    },
+    "settingsGlobHint": "Add a pattern, e.g. **/*.freezed.dart",
+    "@settingsGlobHint": {
+        "description": "Hint of the glob pattern field"
+    },
+    "settingsGlobInvalid": "Not a valid pattern",
+    "@settingsGlobInvalid": {
+        "description": "Error of the glob pattern field"
+    },
+    "settingsGlobAdd": "Add pattern",
+    "@settingsGlobAdd": {
+        "description": "Tooltip of the add pattern button"
+    },
+    "settingsTextInvalid": "Must not be empty",
+    "@settingsTextInvalid": {
+        "description": "Error of a text rule field"
+    },
+    "ruleGroupFiles": "Files",
+    "@ruleGroupFiles": {
+        "description": "Rule group"
+    },
+    "ruleGroupLinks": "Links",
+    "@ruleGroupLinks": {
+        "description": "Rule group"
+    },
+    "ruleGroupNodes": "Spheres",
+    "@ruleGroupNodes": {
+        "description": "Rule group"
+    },
+    "ruleGroupEntry": "Starting point",
+    "@ruleGroupEntry": {
+        "description": "Rule group"
+    },
+    "ruleGroupAnalysis": "Analysis",
+    "@ruleGroupAnalysis": {
+        "description": "Rule group"
+    },
+    "ruleExcludeGeneratedTitle": "Skip generated files",
+    "@ruleExcludeGeneratedTitle": {
+        "description": "Rule title"
+    },
+    "ruleExcludeGeneratedDescription": "Do not analyze files matching the generated patterns.",
+    "@ruleExcludeGeneratedDescription": {
+        "description": "Rule description"
+    },
+    "ruleGeneratedPatternsTitle": "Generated file patterns",
+    "@ruleGeneratedPatternsTitle": {
+        "description": "Rule title"
+    },
+    "ruleGeneratedPatternsDescription": "Glob patterns of generated files, e.g. **/*.g.dart.",
+    "@ruleGeneratedPatternsDescription": {
+        "description": "Rule description"
+    },
+    "ruleExcludeTestsTitle": "Skip tests",
+    "@ruleExcludeTestsTitle": {
+        "description": "Rule title"
+    },
+    "ruleExcludeTestsDescription": "Do not analyze test/, integration_test/, test_driver/ and *_test.dart files.",
+    "@ruleExcludeTestsDescription": {
+        "description": "Rule description"
+    },
+    "ruleExtraExcludesTitle": "Other files to skip",
+    "@ruleExtraExcludesTitle": {
+        "description": "Rule title"
+    },
+    "ruleExtraExcludesDescription": "More glob patterns to skip. Hidden folders and build/ are always skipped.",
+    "@ruleExtraExcludesDescription": {
+        "description": "Rule description"
+    },
+    "ruleCallsTitle": "Calls",
+    "@ruleCallsTitle": {
+        "description": "Rule title"
+    },
+    "ruleCallsDescription": "Function and method calls are links.",
+    "@ruleCallsDescription": {
+        "description": "Rule description"
+    },
+    "ruleImportsTitle": "Imports",
+    "@ruleImportsTitle": {
+        "description": "Rule title"
+    },
+    "ruleImportsDescription": "Imports are links between files.",
+    "@ruleImportsDescription": {
+        "description": "Rule description"
+    },
+    "ruleImplementsTitle": "Implements",
+    "@ruleImplementsTitle": {
+        "description": "Rule title"
+    },
+    "ruleImplementsDescription": "implements clauses are links.",
+    "@ruleImplementsDescription": {
+        "description": "Rule description"
+    },
+    "ruleMixinsTitle": "Mixins",
+    "@ruleMixinsTitle": {
+        "description": "Rule title"
+    },
+    "ruleMixinsDescription": "with clauses are links.",
+    "@ruleMixinsDescription": {
+        "description": "Rule description"
+    },
+    "ruleAmbiguousCallsTitle": "Calls on unknown types",
+    "@ruleAmbiguousCallsTitle": {
+        "description": "Rule title"
+    },
+    "ruleAmbiguousCallsDescription": "When the type of the receiver is unknown: drop the call, link it only if one project method has that name, or link every candidate.",
+    "@ruleAmbiguousCallsDescription": {
+        "description": "Rule description"
+    },
+    "ruleExternalPackagesTitle": "External packages",
+    "@ruleExternalPackagesTitle": {
+        "description": "Rule title"
+    },
+    "ruleExternalPackagesDescription": "Show the packages the code uses as spheres you cannot enter.",
+    "@ruleExternalPackagesDescription": {
+        "description": "Rule description"
+    },
+    "ruleDartSdkTitle": "Dart SDK",
+    "@ruleDartSdkTitle": {
+        "description": "Rule title"
+    },
+    "ruleDartSdkDescription": "Show dart: libraries as a package sphere named dart.",
+    "@ruleDartSdkDescription": {
+        "description": "Rule description"
+    },
+    "ruleGhostParentsTitle": "Ghost parents",
+    "@ruleGhostParentsTitle": {
+        "description": "Rule title"
+    },
+    "ruleGhostParentsDescription": "A class extending an external class (e.g. StatelessWidget) goes inside a ghost sphere named after it.",
+    "@ruleGhostParentsDescription": {
+        "description": "Rule description"
+    },
+    "rulePrivateTitle": "Private declarations",
+    "@rulePrivateTitle": {
+        "description": "Rule title"
+    },
+    "rulePrivateDescription": "Include declarations whose name starts with _.",
+    "@rulePrivateDescription": {
+        "description": "Rule description"
+    },
+    "ruleMemberKindsTitle": "Members shown",
+    "@ruleMemberKindsTitle": {
+        "description": "Rule title"
+    },
+    "ruleMemberKindsDescription": "Which class members become spheres inside their class.",
+    "@ruleMemberKindsDescription": {
+        "description": "Rule description"
+    },
+    "ruleEntryPointTitle": "Entry file",
+    "@ruleEntryPointTitle": {
+        "description": "Rule title"
+    },
+    "ruleEntryPointDescription": "Where the camera starts: the main() of this file.",
+    "@ruleEntryPointDescription": {
+        "description": "Rule description"
+    },
+    "ruleResolutionModeTitle": "Analysis precision",
+    "@ruleResolutionModeTitle": {
+        "description": "Rule title"
+    },
+    "ruleResolutionModeDescription": "Parse only resolves calls from declared types, the same on every device.",
+    "@ruleResolutionModeDescription": {
+        "description": "Rule description"
+    },
+    "optionSkip": "Drop them",
+    "@optionSkip": {
+        "description": "Rule option"
+    },
+    "optionUniqueName": "Link when the name is unique",
+    "@optionUniqueName": {
+        "description": "Rule option"
+    },
+    "optionAll": "Link every candidate",
+    "@optionAll": {
+        "description": "Rule option"
+    },
+    "optionMethod": "Methods",
+    "@optionMethod": {
+        "description": "Rule option"
+    },
+    "optionConstructor": "Constructors",
+    "@optionConstructor": {
+        "description": "Rule option"
+    },
+    "optionGetter": "Getters",
+    "@optionGetter": {
+        "description": "Rule option"
+    },
+    "optionSetter": "Setters",
+    "@optionSetter": {
+        "description": "Rule option"
+    },
+    "optionParseOnly": "Parse only",
+    "@optionParseOnly": {
+        "description": "Rule option"
+    },
+    "optionFullResolution": "Full resolution",
+    "@optionFullResolution": {
+        "description": "Rule option"
+    },
+    "optionFullResolutionNote": "Coming later. It downloads every dependency and needs much more time and memory, especially on phones and in browsers.",
+    "@optionFullResolutionNote": {
+        "description": "Note of a disabled rule option"
     }
 }
