@@ -6,7 +6,6 @@
     "homeEmptyBody": "Analysez un projet Dart pour survoler son code en 3D.",
     "homeNewAnalysis": "Nouvelle analyse",
     "homeOpenFile": "Ouvrir un fichier",
-    "homeShowDemo": "Démo 3D",
     "homeSettingsTooltip": "Paramètres",
     "newAnalysisTitle": "Nouvelle analyse",
     "newAnalysisComingSoon": "Le choix d’un dossier, d’un fichier zip ou d’un dépôt git arrive dans la prochaine version.",
@@ -74,5 +73,10 @@
     "optionSetter": "Setters",
     "optionParseOnly": "Analyse syntaxique",
     "optionFullResolution": "Résolution complète",
-    "optionFullResolutionNote": "Arrive plus tard. Elle télécharge toutes les dépendances et demande beaucoup plus de temps et de mémoire, surtout sur téléphone et dans un navigateur."
+    "optionFullResolutionNote": "Arrive plus tard. Elle télécharge toutes les dépendances et demande beaucoup plus de temps et de mémoire, surtout sur téléphone et dans un navigateur.",
+    "homeOpenSample": "Ouvrir l’exemple",
+    "viewerOpening": "Ouverture de la carte de code…",
+    "viewerNotACodeMap": "Ce fichier n’est pas une carte de code",
+    "viewerBackHome": "Retour à l’accueil",
+    "viewerStats": "{spheres} sphères · {links} liens"
 }

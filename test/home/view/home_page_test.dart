@@ -29,7 +29,7 @@ void main() {
       ('Settings', '/settings'),
       ('New analysis', '/new-analysis'),
       ('Open file', '/new-analysis'),
-      ('3D demo', '/viewer'),
+      ('Open sample', '/viewer'),
     ]) {
       testWidgets('"$label" goes to $location', (tester) async {
         await tester.pumpApp(const HomePage(), router: router);

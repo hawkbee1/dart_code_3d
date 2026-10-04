@@ -1,3 +1,4 @@
+import 'package:code_map_repository/code_map_repository.dart';
 import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/l10n/l10n.dart';
 import 'package:dart_code_3d/settings/settings.dart';
@@ -7,18 +8,35 @@ import 'package:material_ui/material_ui.dart';
 import 'package:settings_repository/settings_repository.dart';
 
 class App extends StatelessWidget {
-  new({required this.settingsRepository, GoRouter? router, super.key})
-    : router = router ?? GoRouter(routes: $appRoutes);
+  new({
+    required this.settingsRepository,
+    required this.codeMapRepository,
+    this.flavor = AppFlavor.production,
+    String initialLocation = '/',
+    GoRouter? router,
+    super.key,
+  }) : router =
+           router ??
+           GoRouter(routes: $appRoutes, initialLocation: initialLocation);
 
   final SettingsRepository settingsRepository;
+
+  final CodeMapRepository codeMapRepository;
+
+  /// The build flavor: development adds debugging tools.
+  final AppFlavor flavor;
 
   /// The router; injectable for tests.
   final GoRouter router;
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider.value(
-      value: settingsRepository,
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider.value(value: settingsRepository),
+        RepositoryProvider.value(value: codeMapRepository),
+        RepositoryProvider.value(value: flavor),
+      ],
       child: BlocProvider(
         create: (_) =>
             SettingsBloc(repository: settingsRepository)

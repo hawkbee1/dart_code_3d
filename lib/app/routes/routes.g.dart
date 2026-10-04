@@ -97,10 +97,16 @@ mixin $NewAnalysisRoute on GoRouteData {
 }
 
 mixin $ViewerRoute on GoRouteData {
-  static ViewerRoute _fromState(GoRouterState state) => const ViewerRoute();
+  static ViewerRoute _fromState(GoRouterState state) =>
+      ViewerRoute(file: state.uri.queryParameters['file']);
+
+  ViewerRoute get _self => this as ViewerRoute;
 
   @override
-  String get location => GoRouteData.$location('/viewer');
+  String get location => GoRouteData.$location(
+    '/viewer',
+    queryParams: {if (_self.file != null) 'file': _self.file},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

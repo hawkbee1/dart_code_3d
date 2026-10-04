@@ -1,3 +1,4 @@
+import 'package:code_map_repository/code_map_repository.dart';
 import 'package:dart_code_3d/analysis/analysis.dart';
 import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/home/home.dart';
@@ -14,6 +15,8 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 
 class _MockGoRouterState extends Mock implements GoRouterState;
 
+class _MockCodeMapRepository extends Mock implements CodeMapRepository;
+
 void main() {
   group('routes', () {
     late GoRouter router;
@@ -24,9 +27,14 @@ void main() {
       router = GoRouter(routes: $appRoutes);
     });
 
-    Future<void> pump(WidgetTester tester) async {
+    Future<void> pump(
+      WidgetTester tester, {
+      AppFlavor flavor = AppFlavor.production,
+    }) async {
       await tester.pumpWidget(
         App(
+          flavor: flavor,
+          codeMapRepository: _MockCodeMapRepository(),
           settingsRepository: SettingsRepository(
             preferences: SharedPreferencesAsync(),
           ),
@@ -68,13 +76,34 @@ void main() {
       expect(const ViewerRoute().location, '/viewer');
     });
 
-    testWidgets('/viewer builds the $ViewerPage', (tester) async {
+    testWidgets('/viewer opens the sample', (tester) async {
       await pump(tester);
       final context = tester.element(find.byType(HomePage));
 
+      final page = const ViewerRoute(file: '/tmp/map.dc3d')
+          .build(context, _MockGoRouterState());
+
+      expect(page, isA<ViewerPage>());
+      expect((page as ViewerPage).source, CodeMapSource.sample);
+    });
+
+    testWidgets('/viewer?file= opens a local file in development', (
+      tester,
+    ) async {
+      await pump(tester, flavor: AppFlavor.development);
+      final context = tester.element(find.byType(HomePage));
+      const route = ViewerRoute(file: '/tmp/map.dc3d');
+
+      final page = route.build(context, _MockGoRouterState()) as ViewerPage;
+
+      expect(page.source, const LocalFileCodeMapSource('/tmp/map.dc3d'));
+      expect(route.location, '/viewer?file=%2Ftmp%2Fmap.dc3d');
       expect(
-        const ViewerRoute().build(context, _MockGoRouterState()),
-        isA<ViewerPage>(),
+        (const ViewerRoute().build(
+          context,
+          _MockGoRouterState(),
+        ) as ViewerPage).source,
+        CodeMapSource.sample,
       );
     });
   });

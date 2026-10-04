@@ -65,7 +65,7 @@ class HomePage extends StatelessWidget {
                     ),
                     TextButton.icon(
                       icon: const Icon(Icons.view_in_ar),
-                      label: Text(l10n.homeShowDemo),
+                      label: Text(l10n.homeOpenSample),
                       onPressed: () => const ViewerRoute().go(context),
                     ),
                   ],

@@ -13,6 +13,10 @@ dependencies:
   bloc: ^9.2.1
   code_graph:
     path: ../../packages/code_graph
+  code_map_repository:
+    path: ../../packages/code_map_repository
+  code_source_client:
+    path: ../../packages/code_source_client
   equatable: ^3.0.0
   flutter:
     sdk: flutter
@@ -50,6 +54,7 @@ dev_dependencies:
 flutter:
   assets:
     - flutter_scene_generated/
+    - assets/samples/sample.dc3d
   # Roboto (Apache 2.0, assets/fonts/Roboto_LICENSE.txt), bundled so text looks the
   # same on every platform and in golden tests.
   fonts:
