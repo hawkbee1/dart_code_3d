@@ -58,6 +58,7 @@ final visualScenarios = <VisualScenario>[
         final world = CodeWorld(map, context.worldColors);
         final navigator = FlyNavigator(world: world);
         flyScriptedPath(navigator);
+        world.tick(0, animate: false, cameraPosition: navigator.position);
         return ColoredBox(
           color: world.colors.background,
           child: LayoutBuilder(
@@ -72,7 +73,120 @@ final visualScenarios = <VisualScenario>[
       return build;
     },
   ),
+  _worldScenario(
+    'links_top_level',
+    pose: _wholeWorld,
+    // A whole world is mostly empty space.
+    minCenterCoverage: 0.01,
+  ),
+  _worldScenario(
+    'links_focus_selected',
+    pose: _wholeWorld,
+    selected: 'WeatherRepository',
+    minCenterCoverage: 0.01,
+  ),
+  _worldScenario(
+    'inside_interior',
+    container: 'WeatherCache',
+    pose: _facingChildren,
+  ),
+  _worldScenario(
+    'inside_window',
+    container: 'WeatherCache',
+    mode: ViewMode.window,
+    pose: _lookingOut,
+  ),
 ];
+
+/// The sample world seen from [pose] (chosen from the world and the map),
+/// with [mode] and the [selected] node name (links focus on it); the camera
+/// is inside [container] (by node name) when given.
+VisualScenario _worldScenario(
+  String id, {
+  required CameraPose Function(CodeWorld world, String? container) pose,
+  String? container,
+  ViewMode mode = ViewMode.interior,
+  String? selected,
+  double minCenterCoverage = 0.05,
+}) => VisualScenario(
+  id: id,
+  clearCorners: false,
+  minCenterCoverage: minCenterCoverage,
+  load: () async {
+    final map = await _sampleMap();
+    String? idOf(String? name) => name == null
+        ? null
+        : map.graph.nodes.values.firstWhere((n) => n.name == name).id;
+    final containerId = idOf(container);
+    final selectedId = idOf(selected);
+    Widget build(BuildContext context) {
+      final world = CodeWorld(map, context.worldColors)
+        ..show(
+          resolveVisibility(
+            index: VisibilityIndex.of(map),
+            containerId: containerId,
+            mode: mode,
+            linkKinds: {...LinkKind.values},
+            selectedId: selectedId,
+          ),
+          mode,
+        );
+      final navigator = FlyNavigator(
+        world: world,
+        start: pose(world, containerId),
+      );
+      // A capture has no animation: shells at their final opacity, links
+      // sized for the camera.
+      world.tick(0, animate: false, cameraPosition: navigator.position);
+      return ColoredBox(
+        color: world.colors.background,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SceneView(
+            world.scene,
+            camera: navigator.camera(constraints.biggest),
+          ),
+        ),
+      );
+    }
+
+    return build;
+  },
+);
+
+/// The whole world in view, from the front and a little above.
+CameraPose _wholeWorld(CodeWorld world, String? container) => CameraPose(
+  position: vm.Vector3(0, world.radius * 0.5, world.radius * 2),
+  target: vm.Vector3.zero(),
+);
+
+/// Inside [container], above its center, looking out through the shell
+/// towards the middle of the world: what window view adds to interior view.
+CameraPose _lookingOut(CodeWorld world, String? container) {
+  final center = world.positions[container]!;
+  final outwards = (vm.Vector3.zero() - center)..normalize();
+  final radius = world.map.placements[container]!.radius;
+  return CameraPose(
+    position:
+        center - outwards * (radius * 0.2) + vm.Vector3(0, radius * 0.6, 0),
+    target: vm.Vector3.zero(),
+  );
+}
+
+/// Inside [container], on the side of its shell opposite its children, so
+/// they are all ahead of the camera.
+CameraPose _facingChildren(CodeWorld world, String? container) {
+  final center = world.positions[container]!;
+  final children = vm.Vector3.zero();
+  for (final child in world.map.graph.childrenOf(container)) {
+    children.add(world.positions[child.id]! - center);
+  }
+  return exitPose(
+    world: world,
+    target: container,
+    from: center - children,
+    current: null,
+  );
+}
 
 Future<CodeMap> _sampleMap() async {
   final bytes = await rootBundle.load(CodeMapSource.sample.path);
