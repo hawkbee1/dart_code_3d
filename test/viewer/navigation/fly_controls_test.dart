@@ -13,8 +13,18 @@ void main() {
     late FlyNavigator navigator;
     late int helpShown;
     late int viewToggled;
+    late List<(Offset, Size)> taps;
+    late List<Size> centersSelected;
+    late int deselected;
+    late int labelsToggled;
+    late int searched;
 
     setUp(() {
+      taps = [];
+      centersSelected = [];
+      deselected = 0;
+      labelsToggled = 0;
+      searched = 0;
       navigator = FlyNavigator(
         world: CodeWorld(worldMap(), CodeWorldColors.light),
       );
@@ -26,13 +36,20 @@ void main() {
       WidgetTester tester, {
       TouchControlsMode mode = TouchControlsMode.never,
       TargetPlatform platform = TargetPlatform.linux,
+      bool hideTouchControls = false,
     }) => tester.pumpApp(
       FlyControls(
         navigator: navigator,
         touchControls: mode,
+        hideTouchControls: hideTouchControls,
         platform: platform,
         onHelp: () => helpShown++,
         onToggleViewMode: () => viewToggled++,
+        onTap: (position, size) => taps.add((position, size)),
+        onSelectCenter: centersSelected.add,
+        onDeselect: () => deselected++,
+        onToggleLabels: () => labelsToggled++,
+        onSearch: () => searched++,
         child: const ColoredBox(color: Colors.black),
       ),
     );
@@ -98,12 +115,98 @@ void main() {
         expect(viewToggled, 2);
       });
 
+      testWidgets('L shows or hides the labels', (tester) async {
+        await pump(tester);
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.keyL);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.keyL);
+
+        expect(labelsToggled, 1);
+      });
+
+      testWidgets('Enter selects what is in the middle of the view', (
+        tester,
+      ) async {
+        await pump(tester);
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.enter);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.enter);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.numpadEnter);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.numpadEnter);
+
+        expect(centersSelected, [const Size(800, 600), const Size(800, 600)]);
+      });
+
+      testWidgets('Esc deselects', (tester) async {
+        await pump(tester);
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.escape);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.escape);
+
+        expect(deselected, 1);
+      });
+
+      testWidgets('/ opens the search', (tester) async {
+        await pump(tester);
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.slash, character: '/');
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.slash);
+
+        expect(searched, 1);
+        expect(helpShown, 0);
+      });
+
+      testWidgets('Ctrl+F and Cmd+F open the search', (tester) async {
+        await pump(tester);
+
+        for (final modifier in [
+          LogicalKeyboardKey.controlLeft,
+          LogicalKeyboardKey.metaLeft,
+        ]) {
+          await tester.sendKeyDownEvent(modifier);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+          await tester.sendKeyUpEvent(modifier);
+        }
+
+        expect(searched, 2);
+      });
+
+      testWidgets('F alone is not a shortcut', (tester) async {
+        await pump(tester);
+
+        final handled = await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+
+        expect(handled, isFalse);
+        expect(searched, 0);
+      });
+
       testWidgets('lets other keys through', (tester) async {
         await pump(tester);
 
         final handled = await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
 
         expect(handled, isFalse);
+      });
+    });
+
+    group('taps', () {
+      testWidgets('are reported with their position and the view size', (
+        tester,
+      ) async {
+        await pump(tester);
+
+        await tester.tapAt(const Offset(120, 340));
+
+        expect(taps, [(const Offset(120, 340), const Size(800, 600))]);
+      });
+
+      testWidgets('are not reported when the finger drags', (tester) async {
+        await pump(tester);
+
+        await tester.dragFrom(const Offset(300, 300), const Offset(100, 0));
+
+        expect(taps, isEmpty);
       });
     });
 
@@ -137,6 +240,17 @@ void main() {
 
         await pump(tester, platform: TargetPlatform.android);
         expect(find.byType(Trackball), findsNothing);
+      });
+
+      testWidgets('can be hidden whatever the setting says', (tester) async {
+        await pump(
+          tester,
+          mode: TouchControlsMode.always,
+          hideTouchControls: true,
+        );
+
+        expect(find.byType(Trackball), findsNothing);
+        expect(find.byType(MoveControl), findsNothing);
       });
 
       testWidgets('appear automatically on phones', (tester) async {

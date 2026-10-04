@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bloc_test/bloc_test.dart';
 import 'package:code_graph/code_graph.dart';
 import 'package:code_map_repository/code_map_repository.dart';
 import 'package:dart_code_3d/app/app.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:settings_repository/settings_repository.dart';
 import 'package:vector_math/vector_math.dart' show Vector3;
 
 import '../../helpers/code_maps.dart';
@@ -159,6 +161,476 @@ void main() {
       }
 
       verify(() => bloc.add(const ViewerContainerChanged('main'))).called(1);
+    });
+
+    group('selecting', () {
+      late MockViewerBloc bloc;
+      late FlyNavigator navigator;
+      late CodeWorld world;
+      late CodeMap sample;
+
+      setUp(() => sample = sampleMap());
+
+      Widget view(
+        ViewerReady state, {
+        TouchControlsMode touchControls = TouchControlsMode.never,
+      }) {
+        bloc = viewerBlocWith(state);
+        return viewerViewWith(
+          bloc,
+          touchControls: touchControls,
+          sceneBuilder: (context, codeWorld, flyNavigator) {
+            world = codeWorld;
+            navigator = flyNavigator;
+            return const SizedBox.expand();
+          },
+        );
+      }
+
+      void phone(WidgetTester tester) {
+        tester.view
+          ..physicalSize = const Size(390, 844)
+          ..devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+      }
+
+      /// Where [id] is on the screen, in the 3D area.
+      Offset on(WidgetTester tester, String id) {
+        final rect = tester.getRect(find.byType(FlyControls));
+        return rect.topLeft +
+            navigator.viewCamera(rect.size).project(world.positions[id]!)!;
+      }
+
+      String idOf(String name) =>
+          sample.graph.nodes.values.firstWhere((n) => n.name == name).id;
+
+      group('the panel', () {
+        testWidgets('is a side sheet on a wide screen', (tester) async {
+          await tester.pumpApp(
+            view(ViewerReady(map: nestedMap(), selectedId: 'A')),
+          );
+          await tester.pump();
+
+          final panel = find.byType(InfoPanel);
+          expect(panel, findsOneWidget);
+          expect(tester.getSize(panel).width, 360);
+          expect(tester.getTopRight(panel).dx, 800);
+          expect(find.text('Class'), findsOneWidget);
+        });
+
+        testWidgets('is a bottom sheet on a phone', (tester) async {
+          phone(tester);
+          await tester.pumpApp(
+            view(ViewerReady(map: nestedMap(), selectedId: 'A')),
+          );
+          await tester.pump();
+
+          final panel = find.byType(InfoPanel);
+          expect(tester.getSize(panel).width, 390);
+          expect(tester.getBottomLeft(panel).dy, 844);
+          expect(tester.getSize(panel).height, lessThanOrEqualTo(420));
+        });
+
+        testWidgets('is not there without a selection', (tester) async {
+          await tester.pumpApp(view(ViewerReady(map: nestedMap())));
+          await tester.pump();
+
+          expect(find.byType(InfoPanel), findsNothing);
+        });
+
+        testWidgets('follows the selection', (tester) async {
+          final map = nestedMap();
+          final first = ViewerReady(map: map, selectedId: 'A');
+          // The mock bloc has to be set up before the first listener.
+          final changing = viewerBlocWith(first);
+          whenListen(
+            changing,
+            Stream.value(ViewerReady(map: map, selectedId: 'pkg')),
+            initialState: first,
+          );
+
+          await tester.pumpApp(
+            viewerViewWith(
+              changing,
+              sceneBuilder: (context, codeWorld, flyNavigator) =>
+                  const SizedBox.expand(),
+            ),
+          );
+          await tester.pump();
+          await tester.pump();
+
+          expect(find.text('External package'), findsOneWidget);
+          expect(find.text('Class'), findsNothing);
+        });
+
+        testWidgets('is kept while the page rebuilds', (tester) async {
+          await tester.pumpApp(
+            view(ViewerReady(map: nestedMap(), selectedId: 'A')),
+          );
+          await tester.pump();
+
+          // Opening the search rebuilds the page: same selection, same map.
+          await tester.tap(find.byTooltip('Search (/)'));
+          await tester.pump();
+
+          expect(find.byType(InfoPanel), findsOneWidget);
+          expect(find.byType(SearchOverlay), findsOneWidget);
+        });
+
+        testWidgets('keeps the HUD clear of a side sheet', (tester) async {
+          await tester.pumpApp(
+            view(ViewerReady(map: nestedMap(), selectedId: 'A')),
+          );
+          await tester.pump();
+
+          expect(
+            tester.getTopRight(find.byType(HudToolbar)).dx,
+            lessThanOrEqualTo(800 - 360),
+          );
+        });
+
+        testWidgets('hides the touch controls only under a bottom sheet', (
+          tester,
+        ) async {
+          phone(tester);
+          await tester.pumpApp(
+            view(
+              ViewerReady(map: nestedMap()),
+              touchControls: TouchControlsMode.always,
+            ),
+          );
+          await tester.pump();
+          expect(find.byType(Trackball), findsOneWidget);
+
+          await tester.pumpApp(
+            view(
+              ViewerReady(map: nestedMap(), selectedId: 'A'),
+              touchControls: TouchControlsMode.always,
+            ),
+          );
+          await tester.pump();
+          expect(find.byType(Trackball), findsNothing);
+        });
+
+        testWidgets('keeps the touch controls beside a side sheet', (
+          tester,
+        ) async {
+          await tester.pumpApp(
+            view(
+              ViewerReady(map: nestedMap(), selectedId: 'A'),
+              touchControls: TouchControlsMode.always,
+            ),
+          );
+          await tester.pump();
+
+          expect(find.byType(Trackball), findsOneWidget);
+        });
+      });
+
+      group('in the 3D view', () {
+        testWidgets('a tap on a sphere selects it', (tester) async {
+          await tester.pumpApp(view(ViewerReady(map: worldMap())));
+          await tester.pump();
+
+          await tester.tapAt(on(tester, 'main'));
+
+          verify(() => bloc.add(const ViewerNodeSelected('main'))).called(1);
+        });
+
+        testWidgets('a tap on empty space deselects', (tester) async {
+          await tester.pumpApp(
+            view(ViewerReady(map: worldMap(), selectedId: 'A')),
+          );
+          await tester.pump();
+
+          await tester.tapAt(const Offset(30, 400));
+
+          verify(() => bloc.add(const ViewerNodeSelected(null))).called(1);
+        });
+
+        testWidgets('Esc deselects', (tester) async {
+          await tester.pumpApp(
+            view(ViewerReady(map: worldMap(), selectedId: 'A')),
+          );
+          await tester.pump();
+
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.escape);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.escape);
+
+          verify(() => bloc.add(const ViewerNodeSelected(null))).called(1);
+        });
+
+        testWidgets('Enter selects what is under the crosshair', (
+          tester,
+        ) async {
+          await tester.pumpApp(view(ViewerReady(map: worldMap())));
+          await tester.pump();
+
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.enter);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.enter);
+
+          verify(() => bloc.add(const ViewerNodeSelected('main'))).called(1);
+        });
+      });
+
+      group('the panel actions', () {
+        Future<void> pumpSelected(
+          WidgetTester tester,
+          String id, {
+          bool disableAnimations = true,
+        }) async {
+          await tester.pumpApp(
+            view(ViewerReady(map: nestedMap(), selectedId: id)),
+            disableAnimations: disableAnimations,
+          );
+          await tester.pump();
+        }
+
+        testWidgets('fly to flies to the node', (tester) async {
+          await pumpSelected(tester, 'A', disableAnimations: false);
+
+          await tester.tap(find.text('Fly to'));
+
+          expect(navigator.isFlying, isTrue);
+        });
+
+        testWidgets('fly to jumps there without animations', (tester) async {
+          await pumpSelected(tester, 'A');
+
+          await tester.tap(find.text('Fly to'));
+
+          expect(navigator.isFlying, isFalse);
+          // Facing it from four radii.
+          expect(
+            navigator.position.distanceTo(world.positions['A']!),
+            closeTo(12, 1e-2),
+          );
+        });
+
+        testWidgets('enter goes inside the node', (tester) async {
+          await pumpSelected(tester, 'A');
+
+          await tester.tap(find.text('Enter'));
+
+          expect(navigator.container, 'A');
+        });
+
+        testWidgets('there is nothing to enter in a method', (tester) async {
+          await pumpSelected(tester, 'A.m');
+
+          expect(find.text('Enter'), findsNothing);
+        });
+
+        testWidgets('show only its links asks for the focus', (tester) async {
+          await pumpSelected(tester, 'A');
+
+          await tester.tap(find.text('Show only its links'));
+
+          verify(() => bloc.add(const ViewerFocusToggled())).called(1);
+        });
+
+        testWidgets('close deselects', (tester) async {
+          await pumpSelected(tester, 'A');
+
+          await tester.tap(find.byTooltip('Close'));
+
+          verify(() => bloc.add(const ViewerNodeSelected(null))).called(1);
+        });
+
+        testWidgets('copy path copies the location and says so', (
+          tester,
+        ) async {
+          final copied = <String>[];
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            (call) async {
+              if (call.method == 'Clipboard.setData') {
+                copied.add(
+                  (call.arguments as Map<Object?, Object?>)['text']! as String,
+                );
+              }
+              return null;
+            },
+          );
+          addTearDown(
+            () => tester.binding.defaultBinaryMessenger
+                .setMockMethodCallHandler(SystemChannels.platform, null),
+          );
+          await tester.pumpApp(
+            view(ViewerReady(map: sample, selectedId: idOf('WeatherCache'))),
+          );
+          await tester.pump();
+
+          await tester.tap(find.text('Copy path'));
+          await tester.pump();
+
+          expect(
+            copied.single,
+            startsWith('lib/weather/data/weather_cache.dart:9'),
+          );
+          expect(find.textContaining('Copied: lib/weather'), findsOneWidget);
+        });
+      });
+
+      group('the search', () {
+        Future<void> pumpSample(WidgetTester tester) async {
+          await tester.pumpApp(
+            view(ViewerReady(map: sample)),
+            disableAnimations: true,
+          );
+          await tester.pump();
+        }
+
+        testWidgets('opens from the toolbar, and closes with its button', (
+          tester,
+        ) async {
+          await pumpSample(tester);
+          expect(find.byType(SearchOverlay), findsNothing);
+
+          await tester.tap(find.byTooltip('Search (/)'));
+          await tester.pump();
+          expect(find.byType(SearchOverlay), findsOneWidget);
+
+          await tester.tap(find.byTooltip('Close search'));
+          await tester.pump();
+          expect(find.byType(SearchOverlay), findsNothing);
+        });
+
+        testWidgets('opens with / and with Ctrl+F', (tester) async {
+          await pumpSample(tester);
+
+          await tester.sendKeyDownEvent(
+            LogicalKeyboardKey.slash,
+            character: '/',
+          );
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.slash);
+          await tester.pump();
+          expect(find.byType(SearchOverlay), findsOneWidget);
+
+          await tester.tap(find.byTooltip('Close search'));
+          await tester.pump();
+          await tester.tap(find.byType(FlyControls));
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          expect(find.byType(SearchOverlay), findsOneWidget);
+        });
+
+        testWidgets('Esc closes it and the keys fly again', (tester) async {
+          await pumpSample(tester);
+          await tester.tap(find.byTooltip('Search (/)'));
+          await tester.pump();
+
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+          await tester.pump();
+          expect(find.byType(SearchOverlay), findsNothing);
+
+          // Back to the 3D area: the arrow keys fly again, without a click.
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowUp);
+          expect(navigator.input.forward, isTrue);
+        });
+
+        testWidgets('picking a result selects it and flies there', (
+          tester,
+        ) async {
+          await pumpSample(tester);
+          await tester.tap(find.byTooltip('Search (/)'));
+          await tester.pump();
+
+          await tester.enterText(find.byType(TextField), 'weathercache');
+          await tester.pump();
+          await tester.tap(find.text('WeatherCache').first);
+          await tester.pump();
+
+          verify(() => bloc.add(ViewerNodeSelected(idOf('WeatherCache'))))
+              .called(1);
+          expect(find.byType(SearchOverlay), findsNothing);
+          // The target is inside its class: the camera ends up facing it.
+          expect(
+            navigator.container,
+            sample.graph.nodes[idOf('WeatherCache')]!.parentId,
+          );
+        });
+      });
+
+      group('the labels', () {
+        testWidgets('the toolbar button shows or hides them', (tester) async {
+          await tester.pumpApp(view(ViewerReady(map: worldMap())));
+          await tester.pump();
+
+          await tester.tap(find.byTooltip('Labels (L)'));
+
+          verify(() => bloc.add(const ViewerLabelsToggled())).called(1);
+        });
+
+        testWidgets('the L key does too', (tester) async {
+          await tester.pumpApp(view(ViewerReady(map: worldMap())));
+          await tester.pump();
+
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.keyL);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.keyL);
+
+          verify(() => bloc.add(const ViewerLabelsToggled())).called(1);
+        });
+
+        testWidgets('are drawn only while on', (tester) async {
+          await tester.pumpApp(view(ViewerReady(map: worldMap())));
+          await tester.pump();
+          expect(find.byType(LabelsLayer), findsOneWidget);
+
+          await tester.pumpApp(
+            view(ViewerReady(map: worldMap(), labelsOn: false)),
+          );
+          await tester.pump();
+          expect(find.byType(LabelsLayer), findsNothing);
+        });
+      });
+
+      group('the minimap', () {
+        testWidgets('is open on a wide screen', (tester) async {
+          await tester.pumpApp(view(ViewerReady(map: nestedMap())));
+          await tester.pump();
+
+          expect(find.byTooltip('Hide the map'), findsOneWidget);
+        });
+
+        testWidgets('starts collapsed on a phone', (tester) async {
+          phone(tester);
+          await tester.pumpApp(view(ViewerReady(map: nestedMap())));
+          await tester.pump();
+
+          expect(find.byTooltip('Show the map'), findsOneWidget);
+        });
+
+        testWidgets('a tap on a sphere selects it and flies there', (
+          tester,
+        ) async {
+          final map = nestedMap();
+          await tester.pumpApp(view(ViewerReady(map: map)));
+          await tester.pump();
+          final positions = cachedWorldPositions(map);
+          final projection = MinimapProjection.fit([
+            for (final node in map.graph.topLevel)
+              (
+                id: node.id,
+                center: positions[node.id]!,
+                radius: map.placements[node.id]!.radius,
+              ),
+          ], const Size.square(176));
+          final mapArea = find.byWidgetPredicate(
+            (w) => w is CustomPaint && w.size == const Size.square(176),
+          );
+
+          await tester.tapAt(
+            tester.getTopLeft(mapArea) + projection.toMap(positions['C']!),
+          );
+
+          verify(() => bloc.add(const ViewerNodeSelected('C'))).called(1);
+          expect(navigator.isFlying, isTrue);
+        });
+      });
     });
 
     group('inside a sphere', () {

@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:code_graph/code_graph.dart';
 import 'package:code_map_repository/code_map_repository.dart';
 import 'package:dart_code_3d/app/app.dart';
 import 'package:dart_code_3d/l10n/l10n.dart';
@@ -5,10 +9,13 @@ import 'package:dart_code_3d/settings/settings.dart';
 import 'package:dart_code_3d/viewer/bloc/viewer_bloc.dart';
 import 'package:dart_code_3d/viewer/models/code_map_source.dart';
 import 'package:dart_code_3d/viewer/models/local_file.dart';
+import 'package:dart_code_3d/viewer/models/node_details.dart';
 import 'package:dart_code_3d/viewer/navigation/fly_controls.dart';
 import 'package:dart_code_3d/viewer/navigation/world_controller.dart';
 import 'package:dart_code_3d/viewer/view/code_world_view.dart';
 import 'package:dart_code_3d/viewer/widgets/debug_overlay.dart';
+import 'package:dart_code_3d/viewer/widgets/info_panel.dart';
+import 'package:dart_code_3d/viewer/widgets/search_overlay.dart';
 import 'package:dart_code_3d/viewer/widgets/viewer_hud.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,8 +58,154 @@ class ViewerView extends StatefulWidget {
 }
 
 class _ViewerViewState extends State<ViewerView> {
+  /// Screens at least this wide get the info panel as a side sheet.
+  static const _wideBreakpoint = 720.0;
+  static const _sidePanelWidth = 360.0;
+
   bool _debugOverlay = false;
+  bool _searching = false;
   final _worldController = WorldController();
+
+  // The details of the selected node, worked out once per selection.
+  NodeDetails? _details;
+  CodeMap? _detailsMap;
+
+  @override
+  void dispose() {
+    _worldController.dispose();
+    super.dispose();
+  }
+
+  NodeDetails? _detailsOf(ViewerReady ready) {
+    final id = ready.selectedId;
+    if (id == null) return null;
+    final cached = _details;
+    if (cached != null &&
+        cached.id == id &&
+        identical(_detailsMap, ready.map)) {
+      return cached;
+    }
+    _detailsMap = ready.map;
+    return _details = NodeDetails.of(ready.map, id);
+  }
+
+  Widget _ready(
+    BuildContext context,
+    ViewerBloc bloc,
+    ViewerReady ready,
+    TouchControlsMode touchControls,
+    BoxConstraints constraints,
+  ) {
+    final animate = !MediaQuery.disableAnimationsOf(context);
+    final wide = constraints.maxWidth >= _wideBreakpoint;
+    final details = _detailsOf(ready);
+    void select(String? id) => bloc.add(ViewerNodeSelected(id));
+    void flyTo(String id) {
+      select(id);
+      _worldController.flyToNode(id, animate: animate);
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        CodeWorldView(
+          map: ready.map,
+          initialize: widget.initialize ?? CodeWorldView.defaultInitialize,
+          sceneBuilder: widget.sceneBuilder ?? buildCodeWorldScene,
+          visible: ready.visible,
+          viewMode: ready.viewMode,
+          controller: _worldController,
+          selectedId: ready.selectedId,
+          labelsOn: ready.labelsOn,
+          touchControls: touchControls,
+          // A bottom sheet would cover the touch controls.
+          hideTouchControls: details != null && !wide,
+          onContainerChanged: (id) => bloc.add(ViewerContainerChanged(id)),
+          onSelect: select,
+          // The toggle only means something inside a sphere.
+          onToggleViewMode: ready.currentContainerId == null
+              ? null
+              : () => bloc.add(const ViewerViewModeToggled()),
+          onToggleLabels: () => bloc.add(const ViewerLabelsToggled()),
+          onSearch: () => setState(() => _searching = true),
+          onHelp: () => ControlsHelpDialog.show(context),
+        ),
+        ViewerHud(
+          state: ready,
+          controller: _worldController,
+          endInset: details != null && wide ? _sidePanelWidth : 0,
+          onCrumbTap: (id) =>
+              _worldController.flyToContainer(id, animate: animate),
+          onToggleViewMode: () => bloc.add(const ViewerViewModeToggled()),
+          onToggleLinkKind: (kind) => bloc.add(ViewerLinkKindToggled(kind)),
+          onSearch: () => setState(() => _searching = true),
+          onToggleLabels: () => bloc.add(const ViewerLabelsToggled()),
+          onSelectNode: flyTo,
+        ),
+        if (details != null)
+          _panel(context, bloc, ready, details, wide, constraints, animate),
+        if (_searching)
+          SearchOverlay(
+            map: ready.map,
+            onClose: () => setState(() => _searching = false),
+            onSelect: (id) {
+              setState(() => _searching = false);
+              flyTo(id);
+            },
+          ),
+        if (_debugOverlay)
+          DebugOverlay(
+            instanceCount: ready.visible.visibleSpheres.length,
+            linkCount: ready.visible.links.length,
+          ),
+      ],
+    );
+  }
+
+  Widget _panel(
+    BuildContext context,
+    ViewerBloc bloc,
+    ViewerReady ready,
+    NodeDetails details,
+    bool wide,
+    BoxConstraints constraints,
+    bool animate,
+  ) {
+    final panel = InfoPanel(
+      details: details,
+      focusOn: ready.focusOnSelected,
+      bottomSheet: !wide,
+      onFlyTo: () => _worldController.flyToNode(details.id, animate: animate),
+      onEnter: details.isEnterable
+          ? () => _worldController.flyToContainer(details.id, animate: animate)
+          : null,
+      onToggleFocus: () => bloc.add(const ViewerFocusToggled()),
+      onCopyPath: () {
+        unawaited(Clipboard.setData(ClipboardData(text: details.copyablePath)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.infoCopied(details.copyablePath)),
+          ),
+        );
+      },
+      onClose: () => bloc.add(const ViewerNodeSelected(null)),
+    );
+    return wide
+        ? PositionedDirectional(
+            top: 0,
+            bottom: 0,
+            end: 0,
+            width: _sidePanelWidth,
+            child: panel,
+          )
+        : PositionedDirectional(
+            start: 0,
+            end: 0,
+            bottom: 0,
+            height: math.min(constraints.maxHeight * 0.5, 420),
+            child: panel,
+          );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,39 +232,9 @@ class _ViewerViewState extends State<ViewerView> {
         ),
       ),
       ViewerFailure(:final details) => _Failure(details: details),
-      final ViewerReady ready => Stack(
-        fit: StackFit.expand,
-        children: [
-          CodeWorldView(
-            map: ready.map,
-            initialize: widget.initialize ?? CodeWorldView.defaultInitialize,
-            sceneBuilder: widget.sceneBuilder ?? buildCodeWorldScene,
-            visible: ready.visible,
-            viewMode: ready.viewMode,
-            controller: _worldController,
-            touchControls: touchControls,
-            onContainerChanged: (id) => bloc.add(ViewerContainerChanged(id)),
-            // The toggle only means something inside a sphere.
-            onToggleViewMode: ready.currentContainerId == null
-                ? null
-                : () => bloc.add(const ViewerViewModeToggled()),
-            onHelp: () => ControlsHelpDialog.show(context),
-          ),
-          ViewerHud(
-            state: ready,
-            onCrumbTap: (id) => _worldController.flyToContainer(
-              id,
-              animate: !MediaQuery.disableAnimationsOf(context),
-            ),
-            onToggleViewMode: () => bloc.add(const ViewerViewModeToggled()),
-            onToggleLinkKind: (kind) => bloc.add(ViewerLinkKindToggled(kind)),
-          ),
-          if (_debugOverlay)
-            DebugOverlay(
-              instanceCount: ready.visible.visibleSpheres.length,
-              linkCount: ready.visible.links.length,
-            ),
-        ],
+      final ViewerReady ready => LayoutBuilder(
+        builder: (context, constraints) =>
+            _ready(context, bloc, ready, touchControls, constraints),
       ),
     };
     return CallbackShortcuts(

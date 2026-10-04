@@ -11,19 +11,34 @@ void main() {
     late List<String?> crumbs;
     late int viewToggled;
     late List<LinkKind> kindsToggled;
+    late int searched;
+    late int labelsToggled;
+    late List<String> nodesSelected;
+    late WorldController controller;
 
     setUp(() {
       crumbs = [];
       viewToggled = 0;
       kindsToggled = [];
+      searched = 0;
+      labelsToggled = 0;
+      nodesSelected = [];
+      controller = WorldController();
     });
 
-    Widget hud(ViewerReady state) => Scaffold(
+    tearDown(() => controller.dispose());
+
+    Widget hud(ViewerReady state, {double endInset = 0}) => Scaffold(
       body: ViewerHud(
         state: state,
+        controller: controller,
+        endInset: endInset,
         onCrumbTap: crumbs.add,
         onToggleViewMode: () => viewToggled++,
         onToggleLinkKind: kindsToggled.add,
+        onSearch: () => searched++,
+        onToggleLabels: () => labelsToggled++,
+        onSelectNode: nodesSelected.add,
       ),
     );
 

@@ -27,8 +27,22 @@ class ViewerBloc extends Bloc<ViewerEvent, ViewerState> {
       ),
     );
     on<ViewerNodeSelected>(
-      (event, emit) =>
-          _update(emit, (s) => s.copyWith(selectedId: () => event.nodeId)),
+      (event, emit) => _update(
+        emit,
+        (s) => s.copyWith(
+          selectedId: () => event.nodeId,
+          // Focus ends with the selection.
+          focusOnSelected: event.nodeId != null && s.focusOnSelected,
+        ),
+      ),
+    );
+    on<ViewerFocusToggled>(
+      (event, emit) => _update(
+        emit,
+        (s) => s.selectedId == null
+            ? s
+            : s.copyWith(focusOnSelected: !s.focusOnSelected),
+      ),
     );
     on<ViewerViewModeToggled>(
       (event, emit) => _update(

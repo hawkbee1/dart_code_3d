@@ -86,6 +86,12 @@ final visualScenarios = <VisualScenario>[
     minCenterCoverage: 0.01,
   ),
   _worldScenario(
+    'selected_class',
+    highlight: 'WeatherRepository',
+    labels: true,
+    pose: _facingHighlight,
+  ),
+  _worldScenario(
     'inside_interior',
     container: 'WeatherCache',
     pose: _facingChildren,
@@ -107,6 +113,8 @@ VisualScenario _worldScenario(
   String? container,
   ViewMode mode = ViewMode.interior,
   String? selected,
+  String? highlight,
+  bool labels = false,
   double minCenterCoverage = 0.05,
 }) => VisualScenario(
   id: id,
@@ -119,6 +127,7 @@ VisualScenario _worldScenario(
         : map.graph.nodes.values.firstWhere((n) => n.name == name).id;
     final containerId = idOf(container);
     final selectedId = idOf(selected);
+    final highlightId = idOf(highlight);
     Widget build(BuildContext context) {
       final world = CodeWorld(map, context.worldColors)
         ..show(
@@ -130,7 +139,8 @@ VisualScenario _worldScenario(
             selectedId: selectedId,
           ),
           mode,
-        );
+        )
+        ..select(highlightId);
       final navigator = FlyNavigator(
         world: world,
         start: pose(world, containerId),
@@ -140,11 +150,17 @@ VisualScenario _worldScenario(
       world.tick(0, animate: false, cameraPosition: navigator.position);
       return ColoredBox(
         color: world.colors.background,
-        child: LayoutBuilder(
-          builder: (context, constraints) => SceneView(
-            world.scene,
-            camera: navigator.camera(constraints.biggest),
-          ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) => SceneView(
+                world.scene,
+                camera: navigator.camera(constraints.biggest),
+              ),
+            ),
+            if (labels) LabelsLayer(navigator: navigator, world: world),
+          ],
         ),
       );
     }
@@ -152,6 +168,16 @@ VisualScenario _worldScenario(
     return build;
   },
 );
+
+/// The highlighted node, from about three radii.
+CameraPose _facingHighlight(CodeWorld world, String? container) {
+  final target = world.highlighted!.nodeId;
+  return facingPose(
+    world: world,
+    target: target,
+    from: world.startPose.position,
+  );
+}
 
 /// The whole world in view, from the front and a little above.
 CameraPose _wholeWorld(CodeWorld world, String? container) => CameraPose(

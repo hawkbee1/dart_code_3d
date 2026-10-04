@@ -6,7 +6,9 @@ import 'package:dart_code_3d/l10n/l10n.dart';
 import 'package:dart_code_3d/viewer/navigation/fly_controls.dart';
 import 'package:dart_code_3d/viewer/navigation/fly_navigator.dart';
 import 'package:dart_code_3d/viewer/navigation/world_controller.dart';
+import 'package:dart_code_3d/viewer/widgets/labels_layer.dart';
 import 'package:dart_code_3d/viewer/world/code_world.dart';
+import 'package:dart_code_3d/viewer/world/picking.dart';
 import 'package:dart_code_3d/viewer/world/visibility.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:material_ui/material_ui.dart';
@@ -35,9 +37,15 @@ class CodeWorldView extends StatefulWidget {
     this.visible,
     this.viewMode = ViewMode.interior,
     this.controller,
+    this.selectedId,
+    this.labelsOn = true,
     this.touchControls = TouchControlsMode.auto,
+    this.hideTouchControls = false,
     this.onContainerChanged,
+    this.onSelect,
     this.onToggleViewMode,
+    this.onToggleLabels,
+    this.onSearch,
     this.onHelp,
   });
 
@@ -64,14 +72,33 @@ class CodeWorldView extends StatefulWidget {
   /// Moves the camera on behalf of the HUD.
   final WorldController? controller;
 
+  /// The selected node, highlighted and named.
+  final String? selectedId;
+
+  /// Whether the names of the nearest spheres are drawn.
+  final bool labelsOn;
+
   /// When the on-screen touch controls are shown.
   final TouchControlsMode touchControls;
+
+  /// Whether to hide the touch controls, whatever the setting says.
+  final bool hideTouchControls;
 
   /// Called when the camera enters or leaves a sphere.
   final ValueChanged<String?>? onContainerChanged;
 
+  /// Called with the sphere that was tapped (or is under the crosshair when
+  /// `Enter` is pressed), or null for a tap on empty space.
+  final ValueChanged<String?>? onSelect;
+
   /// Switches between interior and window view (the `V` key).
   final VoidCallback? onToggleViewMode;
+
+  /// Shows or hides the labels (the `L` key).
+  final VoidCallback? onToggleLabels;
+
+  /// Opens the search (`/` or Ctrl/Cmd+F).
+  final VoidCallback? onSearch;
 
   /// Shows the controls help (the `?` key).
   final VoidCallback? onHelp;
@@ -110,7 +137,10 @@ class _CodeWorldViewState extends State<CodeWorldView> {
     if (current != null && identical(current.world.map, world.map)) {
       return current;
     }
-    if (current != null) widget.controller?.detach(current);
+    if (current != null) {
+      widget.controller?.detach(current);
+      current.dispose();
+    }
     final navigator = FlyNavigator(
       world: world,
       onContainerChanged: (id) => widget.onContainerChanged?.call(id),
@@ -132,9 +162,20 @@ class _CodeWorldViewState extends State<CodeWorldView> {
   @override
   void dispose() {
     final navigator = _navigator;
-    if (navigator != null) widget.controller?.detach(navigator);
+    if (navigator != null) {
+      widget.controller?.detach(navigator);
+      navigator.dispose();
+    }
     super.dispose();
   }
+
+  /// The sphere of [world] under [position] in a view of [size], if any.
+  String? _pick(
+    CodeWorld world,
+    FlyNavigator navigator,
+    Offset position,
+    Size size,
+  ) => pickSphere(navigator.viewCamera(size).rayAt(position), world.pickables);
 
   @override
   Widget build(BuildContext context) {
@@ -157,15 +198,35 @@ class _CodeWorldViewState extends State<CodeWorldView> {
     final world = _worldFor(colors);
     final visible = widget.visible;
     if (visible != null) world.show(visible, widget.viewMode);
+    world.select(widget.selectedId);
     final navigator = _navigatorFor(world);
     return ColoredBox(
       color: colors.background,
       child: FlyControls(
         navigator: navigator,
         touchControls: widget.touchControls,
+        hideTouchControls: widget.hideTouchControls,
         onHelp: widget.onHelp,
         onToggleViewMode: widget.onToggleViewMode,
-        child: widget.sceneBuilder(context, world, navigator),
+        onToggleLabels: widget.onToggleLabels,
+        onSearch: widget.onSearch,
+        onDeselect: () => widget.onSelect?.call(null),
+        onTap: (position, size) =>
+            widget.onSelect?.call(_pick(world, navigator, position, size)),
+        onSelectCenter: (size) {
+          final id = _pick(world, navigator, size.center(Offset.zero), size);
+          if (id != null) widget.onSelect?.call(id);
+        },
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            widget.sceneBuilder(context, world, navigator),
+            // Under the labels: a name in the middle is not crossed out.
+            const Crosshair(),
+            if (widget.labelsOn)
+              LabelsLayer(navigator: navigator, world: world),
+          ],
+        ),
       ),
     );
   }

@@ -84,7 +84,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
   Widget build(BuildContext context) {
     final spacing = context.spacing;
     return Align(
-      alignment: AlignmentDirectional.topEnd,
+      alignment: AlignmentDirectional.bottomCenter,
       child: Padding(
         padding: EdgeInsets.all(spacing.sm),
         child: DecoratedBox(

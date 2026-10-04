@@ -44,6 +44,12 @@ final class ViewerNodeSelected extends ViewerEvent {
   List<Object?> get props => [nodeId];
 }
 
+/// The user chose to show only the links of the selected node, or all again.
+final class ViewerFocusToggled extends ViewerEvent {
+  /// Creates the event.
+  const new();
+}
+
 /// The user switched between interior and window view.
 final class ViewerViewModeToggled extends ViewerEvent {
   /// Creates the event.

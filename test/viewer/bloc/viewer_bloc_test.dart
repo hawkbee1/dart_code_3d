@@ -148,6 +148,35 @@ void main() {
       );
 
       blocTest<ViewerBloc, ViewerState>(
+        'focuses on the selection only once asked, and only while selected',
+        build: build,
+        seed: () => ViewerReady(map: map),
+        act: (bloc) => bloc
+          // Nothing selected: nothing to focus on.
+          ..add(const ViewerFocusToggled())
+          ..add(const ViewerNodeSelected('A'))
+          ..add(const ViewerFocusToggled())
+          // Another selection keeps the focus.
+          ..add(const ViewerNodeSelected('A.m'))
+          ..add(const ViewerFocusToggled())
+          ..add(const ViewerFocusToggled())
+          ..add(const ViewerNodeSelected(null)),
+        expect: () {
+          final selected = ViewerReady(map: map, selectedId: 'A');
+          final focused = selected.copyWith(focusOnSelected: true);
+          final other = focused.copyWith(selectedId: () => 'A.m');
+          return [
+            selected,
+            focused,
+            other,
+            other.copyWith(focusOnSelected: false),
+            other.copyWith(focusOnSelected: true),
+            ViewerReady(map: map),
+          ];
+        },
+      );
+
+      blocTest<ViewerBloc, ViewerState>(
         'ignores view events before a map is open',
         build: build,
         act: (bloc) => bloc
@@ -171,8 +200,16 @@ void main() {
           containsAll(['main', 'A.m', 'A.B']),
         );
         expect(ready.copyWith(visibleLinkKinds: {}).visible.links, isEmpty);
+        // A selection alone changes nothing: focus is a separate choice.
         expect(
           ready.copyWith(selectedId: () => 'pkg').visible.links,
+          hasLength(6),
+        );
+        expect(
+          ready
+              .copyWith(selectedId: () => 'pkg', focusOnSelected: true)
+              .visible
+              .links,
           hasLength(1),
         );
       });
@@ -229,13 +266,14 @@ void main() {
         const ViewerViewModeToggled(),
         const ViewerLinkKindToggled(LinkKind.import),
         const ViewerLabelsToggled(),
+        const ViewerFocusToggled(),
       ];
       for (final event in events) {
         expect(event.props, isA<List<Object?>>());
       }
       expect(const ViewerLoading().props, isEmpty);
       expect(const ViewerFailure('x').props, ['x']);
-      expect(ViewerReady(map: map).props, hasLength(6));
+      expect(ViewerReady(map: map).props, hasLength(7));
     });
   });
 }

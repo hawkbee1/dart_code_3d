@@ -456,5 +456,280 @@
     "viewerKeyView": "Switch inside / window view",
     "@viewerKeyView": {
         "description": "Help: V key"
+    },
+    "nodeKindClass": "Class",
+    "@nodeKindClass": {
+        "description": "Kind of node: a class"
+    },
+    "nodeKindMixin": "Mixin",
+    "@nodeKindMixin": {
+        "description": "Kind of node: a mixin"
+    },
+    "nodeKindEnum": "Enum",
+    "@nodeKindEnum": {
+        "description": "Kind of node: an enum"
+    },
+    "nodeKindExtension": "Extension",
+    "@nodeKindExtension": {
+        "description": "Kind of node: an extension"
+    },
+    "nodeKindExtensionType": "Extension type",
+    "@nodeKindExtensionType": {
+        "description": "Kind of node: an extension type"
+    },
+    "nodeKindMethod": "Method",
+    "@nodeKindMethod": {
+        "description": "Kind of node: a method"
+    },
+    "nodeKindConstructor": "Constructor",
+    "@nodeKindConstructor": {
+        "description": "Kind of node: a constructor"
+    },
+    "nodeKindGetter": "Getter",
+    "@nodeKindGetter": {
+        "description": "Kind of node: a getter"
+    },
+    "nodeKindSetter": "Setter",
+    "@nodeKindSetter": {
+        "description": "Kind of node: a setter"
+    },
+    "nodeKindFunction": "Function",
+    "@nodeKindFunction": {
+        "description": "Kind of node: a top-level function"
+    },
+    "nodeKindGhostParent": "Superclass from outside the project",
+    "@nodeKindGhostParent": {
+        "description": "Kind of node: a ghost parent"
+    },
+    "nodeKindExternalPackage": "External package",
+    "@nodeKindExternalPackage": {
+        "description": "Kind of node: an external package"
+    },
+    "infoPanelLabel": "Details of {name}",
+    "@infoPanelLabel": {
+        "description": "Semantics label of the info panel",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "infoQualifiedName": "Qualified name",
+    "@infoQualifiedName": {
+        "description": "Info panel field"
+    },
+    "infoLocation": "Location",
+    "@infoLocation": {
+        "description": "Info panel field"
+    },
+    "infoLinesOfCode": "{count, plural, =1{1 line of code} other{{count} lines of code}}",
+    "@infoLinesOfCode": {
+        "description": "Info panel: size",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "infoMembers": "{count, plural, =0{No members} =1{1 member} other{{count} members}}",
+    "@infoMembers": {
+        "description": "Info panel: members of a container",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "infoNested": "{count, plural, =0{No nested types} =1{1 nested type} other{{count} nested types}}",
+    "@infoNested": {
+        "description": "Info panel: nested types of a container",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "infoPackage": "Package: {name}",
+    "@infoPackage": {
+        "description": "Info panel: the package of a ghost parent",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "infoPackageUnknown": "Package: unknown",
+    "@infoPackageUnknown": {
+        "description": "Info panel: a ghost parent without a known package"
+    },
+    "infoPackageModelUnavailable": "Package model not available yet",
+    "@infoPackageModelUnavailable": {
+        "description": "Info panel: external packages are not modeled yet"
+    },
+    "infoLinks": "Links",
+    "@infoLinks": {
+        "description": "Info panel section"
+    },
+    "infoNoLinks": "No links",
+    "@infoNoLinks": {
+        "description": "Info panel: a node without links"
+    },
+    "infoLinkCounts": "{kind}: {outgoing} out · {incoming} in",
+    "@infoLinkCounts": {
+        "description": "Info panel: link counts of one kind",
+        "placeholders": {
+            "kind": {
+                "type": "String"
+            },
+            "outgoing": {
+                "type": "int"
+            },
+            "incoming": {
+                "type": "int"
+            }
+        }
+    },
+    "infoOutgoing": "Out",
+    "@infoOutgoing": {
+        "description": "Info panel: outgoing links"
+    },
+    "infoIncoming": "In",
+    "@infoIncoming": {
+        "description": "Info panel: incoming links"
+    },
+    "resolutionExact": "exact",
+    "@resolutionExact": {
+        "description": "Link resolution: found the exact declaration"
+    },
+    "resolutionByName": "by name",
+    "@resolutionByName": {
+        "description": "Link resolution: matched by name only"
+    },
+    "resolutionAmbiguous": "ambiguous",
+    "@resolutionAmbiguous": {
+        "description": "Link resolution: several declarations had that name"
+    },
+    "resolutionExternal": "external",
+    "@resolutionExternal": {
+        "description": "Link resolution: leaves the project"
+    },
+    "infoResolutionHint": "Exact links follow the declared type. By name and ambiguous ones are guesses.",
+    "@infoResolutionHint": {
+        "description": "Info panel: how far to trust the links"
+    },
+    "infoFlyTo": "Fly to",
+    "@infoFlyTo": {
+        "description": "Info panel action"
+    },
+    "infoEnter": "Enter",
+    "@infoEnter": {
+        "description": "Info panel action: fly into a container"
+    },
+    "infoFocusLinks": "Show only its links",
+    "@infoFocusLinks": {
+        "description": "Info panel action: focus mode"
+    },
+    "infoShowAllLinks": "Show all links",
+    "@infoShowAllLinks": {
+        "description": "Info panel action: leave focus mode"
+    },
+    "infoCopyPath": "Copy path",
+    "@infoCopyPath": {
+        "description": "Info panel action"
+    },
+    "infoCopied": "Copied: {text}",
+    "@infoCopied": {
+        "description": "Message after copying the path",
+        "placeholders": {
+            "text": {
+                "type": "String"
+            }
+        }
+    },
+    "infoClose": "Close",
+    "@infoClose": {
+        "description": "Info panel: close button"
+    },
+    "viewerLabelsTooltip": "Labels (L)",
+    "@viewerLabelsTooltip": {
+        "description": "Tooltip of the labels button"
+    },
+    "viewerSearchTooltip": "Search (/)",
+    "@viewerSearchTooltip": {
+        "description": "Tooltip of the search button"
+    },
+    "searchHint": "Search classes, methods, packages…",
+    "@searchHint": {
+        "description": "Hint of the search field"
+    },
+    "searchEmpty": "Type to search the whole map.",
+    "@searchEmpty": {
+        "description": "Search: before typing"
+    },
+    "searchNoMatch": "No match for “{query}”",
+    "@searchNoMatch": {
+        "description": "Search: nothing found",
+        "placeholders": {
+            "query": {
+                "type": "String"
+            }
+        }
+    },
+    "searchResultLabel": "{name}, {kind}",
+    "@searchResultLabel": {
+        "description": "Semantics label of a search result",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "kind": {
+                "type": "String"
+            }
+        }
+    },
+    "searchClose": "Close search",
+    "@searchClose": {
+        "description": "Tooltip of the close search button"
+    },
+    "minimapTitle": "Map",
+    "@minimapTitle": {
+        "description": "Title of the minimap"
+    },
+    "minimapCollapse": "Hide the map",
+    "@minimapCollapse": {
+        "description": "Tooltip of the minimap collapse button"
+    },
+    "minimapExpand": "Show the map",
+    "@minimapExpand": {
+        "description": "Tooltip of the minimap expand button"
+    },
+    "minimapSemantics": "Top-down map of {count} spheres. Tap one to fly to it.",
+    "@minimapSemantics": {
+        "description": "Semantics label of the minimap",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "viewerKeySearch": "Search",
+    "@viewerKeySearch": {
+        "description": "Help: / key"
+    },
+    "viewerKeySelect": "Select the sphere in the middle",
+    "@viewerKeySelect": {
+        "description": "Help: Enter key"
+    },
+    "viewerKeyDeselect": "Deselect",
+    "@viewerKeyDeselect": {
+        "description": "Help: Escape key"
+    },
+    "viewerKeyLabels": "Show or hide labels",
+    "@viewerKeyLabels": {
+        "description": "Help: L key"
+    },
+    "viewerTapSelect": "Tap a sphere: select it",
+    "@viewerTapSelect": {
+        "description": "Help: tap"
     }
 }

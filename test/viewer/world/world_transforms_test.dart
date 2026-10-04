@@ -17,6 +17,18 @@ void main() {
     });
   });
 
+  group('cachedWorldPositions', () {
+    test('are the positions of the map, worked out once', () {
+      final map = worldMap();
+
+      final positions = cachedWorldPositions(map);
+
+      expect(positions, same(cachedWorldPositions(map)));
+      expect(positions['A.m'], Vector3(5, 0, 0));
+      expect(cachedWorldPositions(worldMap()), isNot(same(positions)));
+    });
+  });
+
   group('worldRadius', () {
     test('holds every top-level sphere', () {
       expect(worldRadius(worldMap()), closeTo(21.6, 1e-9));

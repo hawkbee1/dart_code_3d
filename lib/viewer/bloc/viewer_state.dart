@@ -24,6 +24,7 @@ final class ViewerReady extends ViewerState {
     this.viewMode = ViewMode.interior,
     this.visibleLinkKinds = const {...LinkKind.values},
     this.labelsOn = true,
+    this.focusOnSelected = false,
   });
 
   /// The open map.
@@ -44,13 +45,16 @@ final class ViewerReady extends ViewerState {
   /// Whether labels are drawn.
   final bool labelsOn;
 
+  /// Whether only the links of the selected node are drawn.
+  final bool focusOnSelected;
+
   /// What is drawn: derived from the other fields, computed once per state.
   VisibleWorld get visible => _visible[this] ??= resolveVisibility(
     index: VisibilityIndex.of(map),
     containerId: currentContainerId,
     mode: viewMode,
     linkKinds: visibleLinkKinds,
-    selectedId: selectedId,
+    selectedId: focusOnSelected ? selectedId : null,
   );
 
   // One visible world per state (states are immutable).
@@ -64,6 +68,7 @@ final class ViewerReady extends ViewerState {
     ViewMode? viewMode,
     Set<LinkKind>? visibleLinkKinds,
     bool? labelsOn,
+    bool? focusOnSelected,
   }) => ViewerReady(
     map: map,
     currentContainerId: currentContainerId != null
@@ -73,6 +78,7 @@ final class ViewerReady extends ViewerState {
     viewMode: viewMode ?? this.viewMode,
     visibleLinkKinds: visibleLinkKinds ?? this.visibleLinkKinds,
     labelsOn: labelsOn ?? this.labelsOn,
+    focusOnSelected: focusOnSelected ?? this.focusOnSelected,
   );
 
   @override
@@ -83,6 +89,7 @@ final class ViewerReady extends ViewerState {
     viewMode,
     visibleLinkKinds,
     labelsOn,
+    focusOnSelected,
   ];
 }
 

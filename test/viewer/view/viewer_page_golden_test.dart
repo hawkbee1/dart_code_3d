@@ -85,6 +85,33 @@ void main() {
       builder: () => viewerViewWith(viewerBlocWith(inside(ViewMode.window))),
     );
 
+    ViewerReady selected(String name, {bool focus = false}) {
+      final map = sampleMap();
+      return ViewerReady(
+        map: map,
+        selectedId: map.graph.nodes.values.firstWhere((n) => n.name == name).id,
+        focusOnSelected: focus,
+      );
+    }
+
+    goldenTest(
+      'shows the details of the selected class beside the world',
+      fileName: 'viewer_selected',
+      locales: const [Locale('en'), Locale('fr')],
+      builder: () =>
+          viewerViewWith(viewerBlocWith(selected('WeatherRepository'))),
+    );
+
+    goldenTest(
+      'draws only the links of the node it focuses on',
+      fileName: 'viewer_selected_focus',
+      devices: const [GoldenDevice.tablet],
+      themeModes: const [ThemeMode.light],
+      builder: () => viewerViewWith(
+        viewerBlocWith(selected('WeatherRepository', focus: true)),
+      ),
+    );
+
     goldenTest(
       'cuts the very long names of a deep path',
       fileName: 'viewer_long_names',
