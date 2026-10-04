@@ -2,6 +2,7 @@
     <!-- Downloads the code of a public git repository (release builds too). -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
+        android:allowBackup="false"
         android:label="${appName}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
