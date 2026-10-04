@@ -143,7 +143,8 @@ void main() {
         ),
       )..input.forward = true;
 
-      _fly(navigator, 1);
+      // 8 units at about 5 units per second: well within 3 seconds.
+      _fly(navigator, 3);
       expect(navigator.position.x, closeTo(-20 + 1.6 + collisionMargin, 1e-4));
 
       // Pressing on, it never gets inside (it may slide along the surface).
