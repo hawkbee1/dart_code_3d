@@ -204,6 +204,25 @@ void main() {
     });
 
     group('camera', () {
+      test('clips closer inside a small sphere than in the world', () {
+        final world = CodeWorld(nestedMap(), CodeWorldColors.light);
+        const size = Size(1600, 900);
+        expect(world.camera(size).fovNear, nearDepth);
+
+        // C.k is 0.5 across inside C (radius 3): a plane at 5 cm would cut it.
+        world.show(
+          resolveVisibility(
+            index: VisibilityIndex.of(world.map),
+            containerId: 'A.B',
+            mode: ViewMode.interior,
+            linkKinds: const {...LinkKind.values},
+          ),
+          ViewMode.interior,
+        );
+
+        expect(world.camera(size).fovNear, closeTo(0.01, 1e-12));
+      });
+
       test('starts at the start pose, holding the whole world', () {
         final world = CodeWorld(worldMap(), CodeWorldColors.light);
 

@@ -4,6 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:code_graph/code_graph.dart';
 import 'package:code_map_repository/code_map_repository.dart';
 import 'package:dart_code_3d/viewer/models/code_map_source.dart';
+import 'package:dart_code_3d/viewer/world/nested_scale.dart';
 import 'package:dart_code_3d/viewer/world/visibility.dart';
 import 'package:equatable/equatable.dart';
 
@@ -88,7 +89,7 @@ class ViewerBloc extends Bloc<ViewerEvent, ViewerState> {
         emit(const ViewerFailure('', kind: ViewerFailureKind.missing));
         return;
       }
-      emit(ViewerReady(map: await _repository.openBytes(bytes)));
+      emit(ViewerReady(map: scaleNested(await _repository.openBytes(bytes))));
     } on BuildFailure catch (failure) {
       emit(ViewerFailure(failure.message));
     } on Object catch (error) {

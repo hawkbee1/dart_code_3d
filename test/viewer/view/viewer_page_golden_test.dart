@@ -43,7 +43,7 @@ void main() {
       fileName: 'viewer_ready',
       devices: const [GoldenDevice.phone, GoldenDevice.tablet],
       builder: () => viewerViewWith(
-        viewerBlocWith(ViewerReady(map: sampleMap())),
+        viewerBlocWith(ViewerReady(map: scaleNested(sampleMap()))),
         touchControls: TouchControlsMode.always,
       ),
     );
@@ -52,13 +52,14 @@ void main() {
       'shows the HUD without touch controls on desktop',
       fileName: 'viewer_ready',
       devices: const [GoldenDevice.desktop],
-      builder: () =>
-          viewerViewWith(viewerBlocWith(ViewerReady(map: sampleMap()))),
+      builder: () => viewerViewWith(
+        viewerBlocWith(ViewerReady(map: scaleNested(sampleMap()))),
+      ),
     );
 
     // The camera is inside WeatherCache, which has a nested subclass.
     ViewerReady inside(ViewMode mode) {
-      final map = sampleMap();
+      final map = scaleNested(sampleMap());
       return ViewerReady(
         map: map,
         currentContainerId: map.graph.nodes.values
@@ -86,7 +87,7 @@ void main() {
     );
 
     ViewerReady selected(String name, {bool focus = false}) {
-      final map = sampleMap();
+      final map = scaleNested(sampleMap());
       return ViewerReady(
         map: map,
         selectedId: map.graph.nodes.values.firstWhere((n) => n.name == name).id,
@@ -131,8 +132,9 @@ void main() {
         await tester.tap(find.byIcon(Icons.keyboard_outlined));
         await tester.pumpAndSettle();
       },
-      builder: () =>
-          viewerViewWith(viewerBlocWith(ViewerReady(map: sampleMap()))),
+      builder: () => viewerViewWith(
+        viewerBlocWith(ViewerReady(map: scaleNested(sampleMap()))),
+      ),
     );
   });
 }

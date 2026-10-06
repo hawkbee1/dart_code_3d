@@ -29,6 +29,7 @@ export 'world/code_world.dart';
 export 'world/inverted_mesh.dart';
 export 'world/label_layout.dart';
 export 'world/minimap_geometry.dart';
+export 'world/nested_scale.dart';
 export 'world/picking.dart';
 export 'world/scene_content.dart';
 export 'world/sphere_detail.dart';

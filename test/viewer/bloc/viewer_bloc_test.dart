@@ -50,7 +50,7 @@ void main() {
         'opens an asset',
         build: build,
         act: (bloc) => bloc.add(const ViewerOpened(CodeMapSource.sample)),
-        expect: () => [ViewerReady(map: map)],
+        expect: () => [ViewerReady(map: scaleNested(map))],
         verify: (_) {
           expect(loadedAssets, [CodeMapSource.sample.path]);
           verify(() => repository.openBytes(bytes)).called(1);
@@ -61,7 +61,7 @@ void main() {
         'opens bytes',
         build: build,
         act: (bloc) => bloc.add(ViewerOpened(BytesCodeMapSource('a', bytes))),
-        expect: () => [ViewerReady(map: map)],
+        expect: () => [ViewerReady(map: scaleNested(map))],
         verify: (_) => expect(loadedAssets, isEmpty),
       );
 
@@ -70,7 +70,7 @@ void main() {
         build: build,
         act: (bloc) =>
             bloc.add(const ViewerOpened(LocalFileCodeMapSource('/m.dc3d'))),
-        expect: () => [ViewerReady(map: map)],
+        expect: () => [ViewerReady(map: scaleNested(map))],
         verify: (_) => expect(readFiles, ['/m.dc3d']),
       );
 
@@ -81,7 +81,7 @@ void main() {
                 .thenAnswer((_) async => codeMapFileOf(id: '6-a')),
         build: build,
         act: (bloc) => bloc.add(const ViewerOpened(StoredCodeMapSource('6-a'))),
-        expect: () => [ViewerReady(map: map)],
+        expect: () => [ViewerReady(map: scaleNested(map))],
         verify: (_) {
           verify(() => repository.load('6-a')).called(1);
           verify(() => repository.openBytes(codeMapFileOf(id: '6-a').bytes))
@@ -119,7 +119,10 @@ void main() {
         build: build,
         seed: () => ViewerReady(map: map),
         act: (bloc) => bloc.add(const ViewerOpened(CodeMapSource.sample)),
-        expect: () => [const ViewerLoading(), ViewerReady(map: map)],
+        expect: () => [
+          const ViewerLoading(),
+          ViewerReady(map: scaleNested(map)),
+        ],
       );
 
       blocTest<ViewerBloc, ViewerState>(

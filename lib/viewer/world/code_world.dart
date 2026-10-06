@@ -179,10 +179,14 @@ class CodeWorld {
       position: at.position,
       target: at.target,
       fovRadiansY: fovYFor(size),
-      fovNear: nearDepth,
+      fovNear: nearDepthFor(_scale),
       fovFar: far,
     );
   }
+
+  /// The radius of the sphere the camera is in (the world's at the top level).
+  double get _scale =>
+      containerId == null ? radius : map.placements[containerId]!.radius;
 
   /// The vertical field of view for a view of [size] (wider on portrait
   /// screens), shared by the renderer's camera and the [ViewCamera] that

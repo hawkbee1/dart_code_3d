@@ -216,7 +216,10 @@ CameraPose _facingChildren(CodeWorld world, String? container) {
 
 Future<CodeMap> _sampleMap() async {
   final bytes = await rootBundle.load(CodeMapSource.sample.path);
-  return const CodeMapCodec().decodeFromBytes(Uint8List.sublistView(bytes));
+  // Drawn as the app draws it: nested spheres smaller.
+  return scaleNested(
+    const CodeMapCodec().decodeFromBytes(Uint8List.sublistView(bytes)),
+  );
 }
 
 /// From the start pose, with a fixed 1/30 s step: forward 1 s (through

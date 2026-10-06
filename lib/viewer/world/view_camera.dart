@@ -8,6 +8,12 @@ import 'package:vector_math/vector_math.dart';
 /// camera's near plane.
 const double nearDepth = 0.05;
 
+/// The near clip distance of a camera in a sphere of radius [scale]:
+/// [nearDepth] for a big one, closer in a small one (spheres nested a few
+/// levels deep are a few hundredths across, and a plane that far out would
+/// cut them).
+double nearDepthFor(double scale) => (0.01 * scale).clamp(0.001, nearDepth);
+
 /// The camera as the renderer sees it: where it is, where it looks, how wide
 /// it sees, and the size of the view. It converts between world points and
 /// screen positions, so labels, picking and the minimap agree with what is
