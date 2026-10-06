@@ -179,6 +179,23 @@ void main() {
       expect(navigator.speed, closeTo(navigator.baseSpeed * 0.2, 1e-9));
     });
 
+    test('keeps slowing down in spheres nested deep, tiny', () {
+      final tiny = scaleNested(scaleNested(scaleNested(nestedMap())));
+      final deep = CodeWorld(tiny, CodeWorldColors.light);
+      final navigator = FlyNavigator(
+        world: deep,
+        start: CameraPose(
+          position: deep.positions['A.B']!,
+          target: deep.positions['A.B']! + Vector3(0, 0, -1),
+        ),
+      )..step(_dt); // Settles the container tracking.
+
+      // A.B is drawn 1 × 0.5³ across: its speed is under the old floor.
+      expect(navigator.container, 'A.B');
+      expect(navigator.speed, lessThan(navigator.baseSpeed * 0.05 / 2));
+      expect(navigator.speed, greaterThan(0));
+    });
+
     test('reset returns to the start and releases the input', () {
       final navigator = lookingWest()
         ..input.forward = true

@@ -8,6 +8,7 @@ import 'package:dart_code_3d/viewer/world/camera_pose.dart';
 import 'package:dart_code_3d/viewer/world/inverted_mesh.dart';
 import 'package:dart_code_3d/viewer/world/picking.dart';
 import 'package:dart_code_3d/viewer/world/scene_content.dart';
+import 'package:dart_code_3d/viewer/world/sphere_detail.dart';
 import 'package:dart_code_3d/viewer/world/sphere_instance.dart';
 import 'package:dart_code_3d/viewer/world/view_camera.dart';
 import 'package:dart_code_3d/viewer/world/visibility.dart';
@@ -178,10 +179,14 @@ class CodeWorld {
       position: at.position,
       target: at.target,
       fovRadiansY: fovYFor(size),
-      fovNear: nearDepth,
+      fovNear: nearDepthFor(_scale),
       fovFar: far,
     );
   }
+
+  /// The radius of the sphere the camera is in (the world's at the top level).
+  double get _scale =>
+      containerId == null ? radius : map.placements[containerId]!.radius;
 
   /// The vertical field of view for a view of [size] (wider on portrait
   /// screens), shared by the renderer's camera and the [ViewCamera] that
@@ -198,7 +203,18 @@ class CodeWorld {
   bool _animate = true;
   late Vector3 _cameraPosition = startPose.position;
   final _linkGeometries = <LinkBatch, LineSegmentsGeometry>{};
-  final _shellMaterials = <PhysicallyBasedMaterial>[];
+  final _shellMaterials = <UnlitMaterial>[];
+  final _groups = <_SphereGroup>[];
+  double _detailAge = 0;
+  // Lazy: a geometry is uploaded to the GPU when it is created.
+  late final _geometries = <SphereDetail, Geometry>{
+    for (final detail in SphereDetail.values)
+      detail: SphereGeometry(
+        radius: 1,
+        segments: detail.segments,
+        rings: detail.rings,
+      ),
+  };
   Node? _highlightNode;
   Matrix4 _highlightBase = Matrix4.identity();
   double _time = 0;
@@ -224,6 +240,14 @@ class CodeWorld {
   }) {
     _animate = animate;
     _cameraPosition = cameraPosition.clone();
+    // The spheres' detail follows the camera, ten times a second at most.
+    _detailAge += deltaSeconds;
+    if (deltaSeconds == 0 || _detailAge >= 0.1) {
+      _detailAge = 0;
+      for (final group in _groups) {
+        group.deal(SphereDetail.allOf(group.spheres, _cameraPosition));
+      }
+    }
     _shellAge += deltaSeconds;
     _time += deltaSeconds;
     // The selection breathes a little (not when animations are disabled).
@@ -256,9 +280,7 @@ class CodeWorld {
 
   /// A unit sphere seen from the inside: its inner faces are the front ones.
   late final Geometry _dome = MeshGeometry.fromMeshData(
-    invertedFaces(
-      SphereGeometry(radius: 1, segments: 64, rings: 32).extractMeshData(),
-    ),
+    invertedFaces(SphereGeometry(radius: 1).extractMeshData()),
   );
 
   static PhysicallyBasedMaterial _material({
@@ -272,11 +294,7 @@ class CodeWorld {
     ..alphaMode = alpha < 1 ? AlphaMode.blend : AlphaMode.opaque;
 
   /// A sphere for the highlight: looks like the instance it covers.
-  late final Geometry _unitSphere = SphereGeometry(
-    radius: 1,
-    segments: 48,
-    rings: 24,
-  );
+  late final Geometry _unitSphere = _geometries[SphereDetail.high]!;
 
   /// Puts the outlined copy of the highlighted sphere in the scene (and takes
   /// the previous one out).
@@ -329,17 +347,25 @@ class CodeWorld {
       double alpha = 1,
     }) => _material(roughness: roughness, metallic: metallic, alpha: alpha);
 
+    _groups.clear();
     void spheres(String name, List<SphereInstance> list, Material material) {
       if (list.isEmpty) return;
-      final mesh = InstancedMesh(
-        // 48×24 keeps silhouettes round at desktop size; LOD can come later.
-        geometry: SphereGeometry(radius: 1, segments: 48, rings: 24),
-        material: material,
-      );
-      for (final sphere in list) {
-        mesh.addInstance(sphere.transform, color: sphere.color);
+      // One mesh per level of detail, all sharing the material: tick() deals
+      // the spheres out between them by how large each looks.
+      final group = _SphereGroup(list, {
+        for (final detail in SphereDetail.values)
+          detail: InstancedMesh(
+            geometry: _geometries[detail]!,
+            material: material,
+          ),
+      });
+      _groups.add(group);
+      for (final MapEntry(key: detail, value: mesh) in group.meshes.entries) {
+        scene.add(
+          Node(name: '$name ${detail.name}')
+            ..addComponent(InstancedMeshComponent(mesh)),
+        );
       }
-      scene.add(Node(name: name)..addComponent(InstancedMeshComponent(mesh)));
     }
 
     spheres('solid', content.solid, material());
@@ -351,9 +377,14 @@ class CodeWorld {
     spheres('ghosts', content.ghosts, material(roughness: 0.6, alpha: 0.35));
 
     for (final shell in content.shells) {
-      // Blended; tick() sets its color and opacity. (A blended material is
+      // Blended and unlit, a flat tint: the dome covers the whole screen, and
+      // shading every pixel of it was the biggest cost of being inside a
+      // sphere. tick() sets its color and opacity. (A blended material is
       // always back-face culled, so the dome's geometry is inverted instead.)
-      final shellMaterial = material(roughness: 0.9, alpha: 0.5);
+      final tint = shell.sphere.color;
+      final shellMaterial = UnlitMaterial()
+        ..baseColorFactor = Vector4(tint.r, tint.g, tint.b, 0.5)
+        ..alphaMode = AlphaMode.blend;
       _shellMaterials.add(shellMaterial);
       scene.add(
         Node(
@@ -408,3 +439,29 @@ class CodeWorld {
 
   // coverage:ignore-end
 }
+
+// coverage:ignore-start
+// Holds GPU meshes, like the scene above: covered by the 3D visual tests.
+
+/// A set of spheres drawn with one mesh per [SphereDetail].
+class _SphereGroup {
+  new(this.spheres, this.meshes);
+
+  final List<SphereInstance> spheres;
+  final Map<SphereDetail, InstancedMesh> meshes;
+  List<SphereDetail>? _dealt;
+
+  /// Puts each sphere in the mesh of its [details], when they changed.
+  void deal(List<SphereDetail> details) {
+    if (listEquals(details, _dealt)) return;
+    _dealt = details;
+    for (final mesh in meshes.values) {
+      mesh.clearInstances();
+    }
+    for (final (i, sphere) in spheres.indexed) {
+      meshes[details[i]]!.addInstance(sphere.transform, color: sphere.color);
+    }
+  }
+}
+
+// coverage:ignore-end

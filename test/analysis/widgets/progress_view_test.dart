@@ -182,6 +182,27 @@ void main() {
       handle.dispose();
     });
 
+    testWidgets('announces the stage that is running, not the others', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pump(tester, running(BuildStage.analyzing));
+
+      expect(
+        tester.getSemantics(find.text('Analyzing the code')),
+        matchesSemantics(label: 'Analyzing the code', isLiveRegion: true),
+      );
+      expect(
+        tester.getSemantics(find.text('Getting the code')),
+        matchesSemantics(label: 'Getting the code'),
+      );
+      expect(
+        tester.getSemantics(find.text('Analyzing AltMe')),
+        matchesSemantics(label: 'Analyzing AltMe', isHeader: true),
+      );
+      handle.dispose();
+    });
+
     testWidgets('has big enough buttons', (tester) async {
       final handle = tester.ensureSemantics();
       await pump(tester, running(BuildStage.analyzing));
