@@ -11,12 +11,9 @@ environment:
 
 dependencies:
   bloc: ^9.2.1
-  code_graph:
-    path: ../../packages/code_graph
-  code_map_repository:
-    path: ../../packages/code_map_repository
-  code_source_client:
-    path: ../../packages/code_source_client
+  code_graph: ^0.1.0
+  code_map_repository: ^0.1.0
+  code_source_client: ^0.1.0
   equatable: ^3.0.0
   file_picker: ^13.1.0
   flutter:
@@ -24,15 +21,13 @@ dependencies:
   flutter_bloc: ^9.1.1
   flutter_localizations:
     sdk: flutter
-  flutter_scene:
-    path: ../../packages/flutter_scene/packages/flutter_scene
+  flutter_scene: ^0.23.0
   go_router: ^17.0.0
   hooks: ^2.0.0
   intl: ^0.20.2
   material_ui: ^1.1.1
   path_provider: ^2.1.6
-  settings_repository:
-    path: ../../packages/settings_repository
+  settings_repository: ^0.1.0
   share_plus: ^13.3.1
   shared_preferences: ^2.5.0
   vector_math: ^2.1.4
