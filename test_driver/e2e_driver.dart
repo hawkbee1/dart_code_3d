@@ -1,5 +1,6 @@
 // Host side of the end-to-end test: writes the viewer capture to
-// build/e2e/viewer.png and the measurements to build/e2e/report.json.
+// build/e2e/viewer-<repo>.png and the measurements to
+// build/e2e/report-<repo>.json.
 
 import 'dart:convert';
 import 'dart:io';
@@ -11,11 +12,15 @@ Future<void> main() => integrationDriver(
   responseDataCallback: (data) async {
     final report = {...?data};
     final captures = (report.remove('captures') as Map<String, dynamic>?) ?? {};
+    // One file per repository: `viewer-AltMe.png`, `report-AltMe.json`.
+    final slug = Uri.parse('${report['url']}').pathSegments.last;
     Directory('build/e2e').createSync(recursive: true);
     for (final MapEntry(key: name, value: encoded) in captures.entries) {
-      File('build/e2e/$name').writeAsBytesSync(base64Decode(encoded as String));
+      final dot = name.lastIndexOf('.');
+      File('build/e2e/${name.substring(0, dot)}-$slug${name.substring(dot)}')
+          .writeAsBytesSync(base64Decode(encoded as String));
     }
-    File('build/e2e/report.json')
+    File('build/e2e/report-$slug.json')
         .writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
   },
 );

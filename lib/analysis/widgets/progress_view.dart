@@ -46,9 +46,12 @@ class ProgressView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.analysisProgressTitle(state.label),
-          style: theme.textTheme.headlineSmall,
+        Semantics(
+          header: true,
+          child: Text(
+            l10n.analysisProgressTitle(state.label),
+            style: theme.textTheme.headlineSmall,
+          ),
         ),
         SizedBox(height: spacing.lg),
         ClipRRect(
@@ -156,15 +159,19 @@ class _StageRow extends StatelessWidget {
           SizedBox.square(dimension: 24, child: Center(child: icon)),
           SizedBox(width: spacing.md),
           Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: status == _StageStatus.waiting
-                    ? scheme.onSurfaceVariant
-                    : scheme.onSurface,
-                fontWeight: status == _StageStatus.active
-                    ? FontWeight.w600
-                    : null,
+            // The stage that starts is announced.
+            child: Semantics(
+              liveRegion: status == _StageStatus.active,
+              child: Text(
+                label,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: status == _StageStatus.waiting
+                      ? scheme.onSurfaceVariant
+                      : scheme.onSurface,
+                  fontWeight: status == _StageStatus.active
+                      ? FontWeight.w600
+                      : null,
+                ),
               ),
             ),
           ),

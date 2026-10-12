@@ -81,6 +81,34 @@ Development flavor only:
 - `--dart-define=DC3D_OPEN=<path>` opens a local `.dc3d` at startup (native platforms), for
   performance work on big maps.
 
+### Run it on each platform
+
+Flutter GPU is switched on in each platform's project files, so these are plain runs. Add
+`--flavor development` (and `--target lib/main_development.dart`) for the F3 statistics.
+
+```sh
+$ flutter run -d linux     # needs the Linux desktop toolchain: clang, cmake, ninja, libgtk-3-dev
+$ flutter run -d macos     # network and file access are in the entitlements
+$ flutter run -d windows
+$ flutter run -d <android device>   # the INTERNET permission is in the main manifest
+$ flutter run -d <ios device>
+$ flutter run -d chrome    # WebGL2; git repositories are not offered, a zip file is
+$ flutter build web --release   # also `--wasm`
+```
+
+For a headless Linux run (CI, containers), use Xvfb and Mesa's software renderer, as the 3D tests do:
+`LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a flutter run -d linux --enable-impeller --enable-flutter-gpu`.
+
+### Engine CLI
+
+The analysis engine has a developer command line that prints what it finds in a folder, without the
+app:
+
+```sh
+$ cd ../../packages/code_analysis_engine
+$ dart run code_analysis_engine:analyze <folder> --stats [--rules rules.json] [--out graph.json]
+```
+
 ---
 
 ## Running Tests 🧪
@@ -138,14 +166,34 @@ $ very_good test -t slow test/viewer/world/visibility_benchmark_test.dart
 
 Run a single 3D scenario with `DC3D_SCENARIO=<id> tool/visual_test.sh [--update]`.
 
+### Accessibility
+
+`test/a11y` checks every 2D screen against Flutter's contrast, tap target and label guidelines in
+both themes at text sizes 1× and 2×, the theme's text colors at 4.5:1, and keyboard-only use of
+the analysis form. They run with the other tests.
+
 ### Performance
 
 `integration_test/perf` measures how long maps take to open and the frame times of the
-start view, in a profile build under Xvfb (a lower bound). From the hawkbee root:
+start view and of the view inside the sphere with the most members, in a profile build under Xvfb
+(software rendering: a lower bound). From the hawkbee root:
 
 ```sh
 $ tool/perf_test.sh [map.dc3d ...]   # report in build/perf/report.json
 ```
+
+### End to end (network)
+
+`tool/e2e_test.sh` drives the real UI: it analyzes a public repository (flutter_scene at a tag by
+default; `DC3D_E2E_URL=https://github.com/TalaoDAO/AltMe` for another), waits for the viewer,
+checks the map is listed and stored, and writes the stage timings, a capture and a copy of the map
+to `build/e2e/`, which `tool/perf_test.sh` can then measure.
+
+### In a browser
+
+`tool/web_perf.mjs` opens a `.dc3d` in a served web build with Playwright's Chromium (software
+WebGL: `xvfb-run` is needed for it) and counts frames while the camera flies. Its header says how
+to run it.
 
 ---
 

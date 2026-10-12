@@ -31,6 +31,7 @@ export 'world/label_layout.dart';
 export 'world/minimap_geometry.dart';
 export 'world/picking.dart';
 export 'world/scene_content.dart';
+export 'world/sphere_detail.dart';
 export 'world/sphere_instance.dart';
 export 'world/view_camera.dart';
 export 'world/visibility.dart';

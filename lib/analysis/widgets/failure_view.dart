@@ -33,10 +33,15 @@ class FailureView extends StatelessWidget {
       children: [
         Icon(failure.kind.icon, size: 64, color: theme.colorScheme.error),
         SizedBox(height: spacing.md),
-        Text(
-          l10n.failureTitle(failure.kind),
-          style: theme.textTheme.headlineSmall,
-          textAlign: TextAlign.center,
+        // A live region: a screen reader says the failure when it appears.
+        Semantics(
+          header: true,
+          liveRegion: true,
+          child: Text(
+            l10n.failureTitle(failure.kind),
+            style: theme.textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
         ),
         SizedBox(height: spacing.sm),
         Text(

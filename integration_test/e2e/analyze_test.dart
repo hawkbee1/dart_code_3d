@@ -9,6 +9,8 @@ import 'dart:ui' as ui;
 
 import 'package:code_map_repository/code_map_repository.dart';
 import 'package:code_source_client/code_source_client.dart';
+import 'package:dart_code_3d/analysis/analysis.dart';
+import 'package:dart_code_3d/analysis/bloc/analysis_bloc.dart';
 import 'package:dart_code_3d/analysis/cubit/source_form_cubit.dart';
 import 'package:dart_code_3d/analysis/widgets/source_form.dart';
 import 'package:dart_code_3d/app/app.dart';
@@ -26,14 +28,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../visual/frame_stats.dart';
 
-const _url = String.fromEnvironment(
-  'DC3D_E2E_URL',
-  defaultValue: 'https://github.com/bdero/flutter_scene',
-);
+const _defaultUrl = 'https://github.com/bdero/flutter_scene';
+const _url = String.fromEnvironment('DC3D_E2E_URL', defaultValue: _defaultUrl);
+
+/// The branch or tag: a fixed tag for the default repository, the default
+/// branch (empty) for any other.
 const _ref = String.fromEnvironment(
   'DC3D_E2E_REF',
-  defaultValue: 'flutter_scene-0.23.0',
+  defaultValue: _url == _defaultUrl ? 'flutter_scene-0.23.0' : '',
 );
+
+/// Where to copy the stored map (an absolute folder), for the perf and web
+/// measurements. Nothing is copied when empty.
+const _out = String.fromEnvironment('DC3D_E2E_OUT');
 
 /// Prints to the test log: the first thing to read when a run goes wrong.
 void log(String message) {
@@ -60,6 +67,10 @@ void main() {
     await tester.pump();
     await Scene.initializeStaticResources();
 
+    final repository = CodeMapRepository(
+      sourceClient: CodeSourceClient(),
+      store: FileCodeMapStore(Directory('${storage.path}/code_maps')),
+    );
     final boundaryKey = GlobalKey();
     await tester.pumpWidget(
       RepaintBoundary(
@@ -68,10 +79,7 @@ void main() {
           settingsRepository: SettingsRepository(
             preferences: SharedPreferencesAsync(),
           ),
-          codeMapRepository: CodeMapRepository(
-            sourceClient: CodeSourceClient(),
-            store: FileCodeMapStore(Directory('${storage.path}/code_maps')),
-          ),
+          codeMapRepository: repository,
         ),
       ),
     );
@@ -144,13 +152,29 @@ void main() {
     await tester.pump();
 
     final analysis = Stopwatch()..start();
+    // When each stage began, as seconds after the tap on Analyze.
+    final stageStarts = <String, double>{};
+    final subscription = tester
+        .element(find.byType(NewAnalysisView))
+        .read<AnalysisBloc>()
+        .stream
+        .listen((state) {
+          if (state is AnalysisRunning) {
+            stageStarts.putIfAbsent(
+              state.stage.name,
+              () => analysis.elapsedMilliseconds / 1000,
+            );
+          }
+        });
     log('before Analyze: ${form()}');
     await tester.tap(find.text('Analyze'));
     await tester.pump();
     log('after Analyze: ${screen()}');
     await waitFor(find.byType(ViewerView), const Duration(minutes: 5));
     analysis.stop();
+    await subscription.cancel();
     report['analysis_seconds'] = analysis.elapsed.inMilliseconds / 1000;
+    report['stage_starts_seconds'] = stageStarts;
     report['url'] = _url;
     report['ref'] = _ref;
 
@@ -192,12 +216,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(HomePage), findsOneWidget);
     expect(find.text('Recent maps'), findsOneWidget);
-    expect(find.textContaining('flutter_scene'), findsWidgets);
+    expect(
+      find.textContaining(Uri.parse(_url).pathSegments.last),
+      findsWidgets,
+    );
     final stored = Directory('${storage.path}/code_maps')
         .listSync()
         .whereType<File>()
         .where((f) => f.path.endsWith('.dc3d'));
     expect(stored, hasLength(1));
+    final summary = (await repository.recent()).single;
+    report['nodes'] = summary.nodeCount;
+    report['links'] = summary.linkCount;
     report['map_bytes'] = stored.single.lengthSync();
+    if (_out.isNotEmpty) {
+      Directory(_out).createSync(recursive: true);
+      stored.single.copySync('$_out/${Uri.parse(_url).pathSegments.last}.dc3d');
+    }
   }, timeout: const Timeout(Duration(minutes: 12)));
 }
