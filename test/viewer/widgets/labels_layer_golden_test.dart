@@ -12,7 +12,7 @@ import '../../helpers/helpers.dart';
 /// be drawn, projected through the real camera (there is no GPU here).
 Widget _frame() => Builder(
   builder: (context) {
-    final map = sampleMap();
+    final map = scaleNested(sampleMap());
     final world = CodeWorld(map, context.worldColors);
     final target = map.graph.nodes.values
         .firstWhere((n) => n.name == 'WeatherRepository')

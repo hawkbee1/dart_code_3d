@@ -17,7 +17,7 @@ Widget _frame({
   bool expanded = true,
 }) => Builder(
   builder: (context) {
-    final map = sampleMap();
+    final map = scaleNested(sampleMap());
     String? idOf(String? name) => name == null
         ? null
         : map.graph.nodes.values.firstWhere((n) => n.name == name).id;

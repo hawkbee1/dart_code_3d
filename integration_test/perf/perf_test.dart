@@ -45,7 +45,7 @@ void main() {
 
       final bytes = await read();
       final decode = Stopwatch()..start();
-      final map = await repository.openBytes(bytes);
+      final map = scaleNested(await repository.openBytes(bytes));
       decode.stop();
       final build = Stopwatch()..start();
       final world = CodeWorld(map, CodeWorldColors.dark);

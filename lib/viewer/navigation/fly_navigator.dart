@@ -140,7 +140,7 @@ class FlyNavigator extends ChangeNotifier {
     final radius = container == null
         ? world.radius
         : world.map.placements[container]!.radius;
-    return baseSpeed * (radius / 10).clamp(0.05, 50);
+    return baseSpeed * (radius / 10).clamp(0.002, 50);
   }
 
   /// Turns the view by a drag of [delta] logical pixels.

@@ -149,4 +149,21 @@ void main() {
       expect(camera.forward.distanceTo(Vector3(0, 0, -1)), lessThan(1e-9));
     });
   });
+
+  group(nearDepthFor, () {
+    test('is the usual distance in a big sphere', () {
+      expect(nearDepthFor(100), nearDepth);
+      expect(nearDepthFor(5), nearDepth);
+    });
+
+    test('is a hundredth of a smaller sphere', () {
+      expect(nearDepthFor(1), closeTo(0.01, 1e-12));
+      expect(nearDepthFor(0.2), closeTo(0.002, 1e-12));
+    });
+
+    test('never gets closer than a millimeter', () {
+      expect(nearDepthFor(0.001), 0.001);
+      expect(nearDepthFor(0), 0.001);
+    });
+  });
 }
